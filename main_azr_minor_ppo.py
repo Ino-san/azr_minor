@@ -12,7 +12,7 @@ from azr_minor.trainer.ppo.azr_ray_trainer import CodeIORayPPOTrainer
 from azr_minor.rewards.reward_managers import CodeIORewardManager
 
 
-@hydra.main(config_path='configs', config_name='azr_ppo_trainer', version_base=None)
+@hydra.main(config_path='configs', config_name='azr_minor_ppo_trainer', version_base=None)
 def main(config):
     run_ppo(config)
 

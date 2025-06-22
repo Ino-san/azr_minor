@@ -18,12 +18,10 @@ from omegaconf import OmegaConf
 import numpy as np
 from verl.utils.dataset.rl_dataset import collate_fn
 from verl.trainer.ppo.ray_trainer import (
-    _timer,
     apply_kl_penalty,
     compute_advantage,
     reduce_metrics,
     compute_timing_metrics,
-    _compute_response_info,
 )
 from verl.protocol import pad_dataproto_to_divisor, unpad_dataproto, DataProto
 
@@ -35,6 +33,7 @@ from azr_minor.rewards.code_reward import parse_code_input_output, parse_inputs_
 from azr_minor.utils.code_utils.python_executor import PythonExecutor
 from azr_minor.utils.auxiliary import reflection_keywords
 from azr_minor.utils.logging_utils.stdout import PrettyPrinter
+from azr_minor.utils.verl_append import _timer, _compute_response_info
 
 
 seed_program = {

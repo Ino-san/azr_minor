@@ -5,7 +5,7 @@ from collections import defaultdict
 from omegaconf import OmegaConf, open_dict
 import torch
 import numpy as np
-from verl.trainer.ppo.ray_trainer import RayPPOTrainer, _timer, apply_kl_penalty, compute_advantage, reduce_metrics, compute_data_metrics, compute_timing_metrics
+from verl.trainer.ppo.ray_trainer import RayPPOTrainer, apply_kl_penalty, compute_advantage, reduce_metrics, compute_data_metrics, compute_timing_metrics
 from verl.protocol import pad_dataproto_to_divisor, unpad_dataproto, DataProto
 from verl.utils.dataset.rl_dataset import collate_fn
 from verl import DataProto
@@ -16,6 +16,7 @@ from verl.utils.dataset.rl_dataset import RLHFDataset, collate_fn
 from verl.trainer.ppo.ray_trainer import Role, WorkerType, ResourcePoolManager
 
 from azr_minor.utils.dataset.rl_dataset import RLHFDataset
+from azr_minor.utils.verl_append import _timer
 
 
 def compute_dr_grpo_outcome_advantage(token_level_rewards: torch.Tensor,
