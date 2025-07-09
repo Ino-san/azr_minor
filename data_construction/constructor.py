@@ -127,8 +127,8 @@ def get_gen_code_io_data(
     df = pd.DataFrame(return_io_data)
     df.to_parquet(output_path)
 
-
 def get_pred_code_io_data(
+    language: str,
     io_data: List[Dict],
     target_data_len: int,
     problem_type: str,

@@ -79,11 +79,13 @@ def format_python_code(code: str) -> str:
             options={'aggressive': 1, 'indent_size': 4}
         )
 
+
 def extract_code(completion: str) -> str:
     pattern = re.compile(r"```python\n(.*?)```", re.DOTALL)
     matches = pattern.findall(completion)
     extracted_answer = matches[-1] if len(matches) >= 1 else ""
     return extracted_answer
+    
     
 def extract_code2(completion: str, language: str) -> str:
     if language == 'python':
@@ -314,6 +316,7 @@ def parse_code_input_output(
     reject_multiple_functions: bool = True,
     reject_test_input_in_code: bool = False,
     f_replace_location: str = 'not_first',
+    code_location: str = 'first',
 ) -> Tuple[bool, Dict[str, str]]:
     """
     Parse the input and output of a code snippet.
@@ -330,8 +333,18 @@ def parse_code_input_output(
 
     # Use flags for case-insensitive matching and dotall
     flags = re.DOTALL | re.IGNORECASE
-    code_match = re.search(code_pattern, input_str, flags)
 
+    if code_location == 'last':
+        code_matches = list(re.finditer(code_pattern, input_str, flags))
+        if not code_matches:
+            code_match = None
+        else:
+            code_match = code_matches[-1]
+    elif code_location == 'first':
+        code_match = re.search(code_pattern, input_str, flags)
+    else:
+        raise ValueError(f"Invalid code_location: {code_location}. Must be 'first' or 'last'.")
+   
     # Check required blocks
     if parse_input:
         input_match = re.search(input_pattern, input_str, flags)
