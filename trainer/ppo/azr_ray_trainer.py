@@ -49,7 +49,7 @@ seed_program = {
 "js": """function f(a) {
     return a;
 }""",
-"cpp": """int f(int a) {
+"cpp": """string f(string a) {
     return a;
 }""",
 "go": """func f(a int) int {
@@ -613,6 +613,7 @@ class CodeIORayPPOTrainer(ReasonRLRayPPOTrainer):
             )
         elif self.config.azr.executor == 'sandboxfusion':
             self._executor = SandboxfusionExecutor(
+                language=self.config.azr.language,
                 timeout_length=self.config.azr.execute_max_timeout, 
                 ast_check=self.config.azr.ast_check,
                 max_workers=self.config.azr.get('executor_max_workers', 1),

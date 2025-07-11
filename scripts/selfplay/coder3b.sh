@@ -10,7 +10,8 @@ OUTPUT_SEED_PATH=${OUTPUT_SEED_PATH:-data/3b_coder_seed_io.jsonl}
 OUTPUT_ERROR_SEED_PATH=${OUTPUT_ERROR_SEED_PATH:-data/3b_coder_error_seed_io.jsonl}
 OUTPUT_CODE_F_SEED_PATH=${OUTPUT_CODE_F_SEED_PATH:-data/3b_coder_code_f_seed_io.jsonl}
 
-python -m absolute_zero_reasoner.main_azr_ppo \
+python -m azr_minor.main_azr_minor_ppo \
+    azr.language=cpp \
     data.shuffle=True \
     actor_rollout_ref.ref.include_ref=False \
     algorithm.adv_estimator=reinforce_plus_plus \
@@ -48,7 +49,7 @@ python -m absolute_zero_reasoner.main_azr_ppo \
     algorithm.kl_ctrl.kl_coef=0.0 \
     trainer.critic_warmup=0 \
     trainer.logger=['console','wandb'] \
-    trainer.project_name='azr' \
+    trainer.project_name='azr_minor' \
     trainer.experiment_name='azr_coder3b' \
     trainer.n_gpus_per_node=2 \
     trainer.nnodes=1 \

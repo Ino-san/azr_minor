@@ -9,7 +9,7 @@ import pandas as pd
 from azr_minor.rewards.code_reward import format_python_code
 from azr_minor.data_construction.prompts import get_code_problem_predictor_prompt
 from azr_minor.data_construction.process_data import instruction_following
-
+"""
 def process_livecodebench_execution(row):
     # Extract all function names from the code
     program_name_matches = re.findall(r'def\s+(\w+)\s*\(', row['problem'])
@@ -38,7 +38,7 @@ def process_livecodebench_execution(row):
 
     return row
 
-
+"""
 def add_imports(problem):
     # Add necessary imports based on the content of the problem
     if 'collections' in problem:
@@ -81,14 +81,15 @@ def add_imports(problem):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--max_length', type=int, default=-1)
+    parser.add_argument('--language', type=str, default="python",)
     args = parser.parse_args()
 
     # 283, 452, 510
-    ds = load_dataset('cruxeval-org/cruxeval')['test']
+    ds = load_dataset('xhwl/cruxeval-x')['test']
     ds = ds.map(lambda x: {'problem': format_python_code(x['code'])})
     output_data = []
     for i, data in enumerate(tqdm(ds, desc="Processing CruxEval")):
-        prompt = get_code_problem_predictor_prompt('python', 'code_i', data['problem'], data['input'], data['output'])
+        prompt = get_code_problem_predictor_prompt(args.language, 'code_i', data['problem'], data['input'], data['output'])
         formatted_question = instruction_following.format(prompt)
         output_data.append({
             "data_source": 'cruxeval_i',
@@ -111,7 +112,7 @@ if __name__ == '__main__':
                 'output': data['output'],
             }
         })
-        prompt = get_code_problem_predictor_prompt('python', 'code_o', data['problem'], data['input'], data['output'])
+        prompt = get_code_problem_predictor_prompt(args.language, 'code_o', data['problem'], data['input'], data['output'])
         formatted_question = instruction_following.format(prompt)
         output_data.append({
             "data_source": 'cruxeval_o',
@@ -136,6 +137,7 @@ if __name__ == '__main__':
         })
 
     # another ds:
+    """
     ds = load_dataset('livecodebench/execution')['test']
     ds = ds.map(lambda x: {'problem': format_python_code(x['code'])})
     ds = ds.remove_columns(['code'])
@@ -166,6 +168,7 @@ if __name__ == '__main__':
                 'output': data['output'],
             }
         })
+    """
 
     df = pd.DataFrame(output_data)
     if args.max_length > 0:

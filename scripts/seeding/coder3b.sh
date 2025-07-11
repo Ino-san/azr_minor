@@ -7,11 +7,12 @@ export HYDRA_FULL_ERROR=1
 export PYTHONPATH="${PYTHONPATH}:$(pwd)/verl"
 
 # Define default paths, allowing overrides via environment variables
-OUTPUT_SEED_PATH=${OUTPUT_SEED_PATH:-data/3b_coder_seed_io.jsonl}
-OUTPUT_ERROR_SEED_PATH=${OUTPUT_ERROR_SEED_PATH:-data/3b_coder_error_seed_io.jsonl}
-OUTPUT_CODE_F_SEED_PATH=${OUTPUT_CODE_F_SEED_PATH:-data/3b_coder_code_f_seed_io.jsonl}
+OUTPUT_SEED_PATH=${OUTPUT_SEED_PATH:-data/3b_coder_cpp_seed_io.jsonl}
+OUTPUT_ERROR_SEED_PATH=${OUTPUT_ERROR_SEED_PATH:-data/3b_coder_cpp_error_seed_io.jsonl}
+OUTPUT_CODE_F_SEED_PATH=${OUTPUT_CODE_F_SEED_PATH:-data/3b_coder_cpp_code_f_seed_io.jsonl}
 
-python -m absolute_zero_reasoner.main_azr_ppo \
+python -m azr_minor.main_azr_minor_ppo \
+    azr.language=cpp \
     data.shuffle=True \
     actor_rollout_ref.ref.include_ref=False \
     algorithm.adv_estimator=reinforce_plus_plus \
@@ -29,7 +30,7 @@ python -m absolute_zero_reasoner.main_azr_ppo \
     actor_rollout_ref.actor.use_kl_loss=False \
     actor_rollout_ref.actor.kl_loss_coef=0.0 \
     actor_rollout_ref.actor.kl_loss_type=low_var_kl \
-    actor_rollout_ref.actor.ulysses_sequence_parallel_size=4 \
+    actor_rollout_ref.actor.ulysses_sequence_parallel_size=2 \
     actor_rollout_ref.model.enable_gradient_checkpointing=True \
     actor_rollout_ref.model.pretrained_tokenizer=True \
     actor_rollout_ref.actor.fsdp_config.param_offload=False \
@@ -68,7 +69,7 @@ python -m absolute_zero_reasoner.main_azr_ppo \
     azr.output_error_seed_path=${OUTPUT_ERROR_SEED_PATH} \
     azr.output_code_f_seed_path=${OUTPUT_CODE_F_SEED_PATH} \
     azr.pretrain_pred_steps=-1 \
-    azr.executor=qwq \
+    azr.executor=sandboxfusion \
     azr.ast_check=True \
     azr.reward.n_samples=8 \
     azr.problem_types=['code_i','code_o','code_f'] \

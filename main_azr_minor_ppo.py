@@ -28,7 +28,7 @@ from absolute_zero_reasoner.trainer.ppo.azr_ray_trainer import CodeIORayPPOTrain
 from absolute_zero_reasoner.rewards.reward_managers import CodeIORewardManager
 
 
-@hydra.main(config_path='configs', config_name='azr_ppo_trainer', version_base=None)
+@hydra.main(config_path='configs', config_name='azr_minor_ppo_trainer', version_base=None)
 def main(config):
     run_ppo(config)
 
