@@ -538,8 +538,8 @@ class ReasonRLRayPPOTrainer(RayPPOTrainer):
 
         The only difference is logging more metrics.
         """
-        from absolute_zero_reasoner.utils.tracking import ReasonRLTracking
-        from absolute_zero_reasoner.utils.logging_utils.stdout import PrettyPrinter as pp
+        from azr_minor.utils.tracking import ReasonRLTracking
+        from azr_minor.utils.logging_utils.stdout import PrettyPrinter as pp
         from omegaconf import OmegaConf
 
         # Display training setup header

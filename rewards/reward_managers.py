@@ -37,6 +37,7 @@ class CodeIORewardManager():
     """The reward manager."""
     def __init__(
         self,
+        language: str,
         tokenizer: AutoTokenizer,
         num_examine: int,
         split: str,
@@ -184,6 +185,7 @@ class CodeIORewardManager():
         # first go through, we only checking the format
         elif problem_type.startswith('gen') and 'code_f' not in problem_type:
             success, result = parse_code_input_output(
+                self.language,
                 extracted_content,
                 parse_output=False,
                 remove_after_return=self.generation_reward_config.remove_after_return and self.split == 'train',

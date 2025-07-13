@@ -1129,6 +1129,7 @@ class CodeIORayPPOTrainer(ReasonRLRayPPOTrainer):
                     local_error_entries = []
                     for output_text in output_texts:
                         success, result = parse_code_input_output(
+                            self.config.azr.language,
                             output_text,
                             parse_output=False,
                             remove_after_return=self.config.azr.reward.generation_reward_config.remove_after_return,
@@ -1172,6 +1173,13 @@ class CodeIORayPPOTrainer(ReasonRLRayPPOTrainer):
                                             'composite_functions': []
                                         }
                                     )
+                        else:
+                            print(result)
+                            PrettyPrinter.status(
+                                "DATA", 
+                                f"Failed to parse output: {output_text}", 
+                                "warning"
+                            )
 
                     if self.config.azr.data_selection_strategy.get('generate_seed_dataset_only', False):
                         with open(self.config.azr.data_selection_strategy.output_seed_path.replace('.jsonl', f'_temp.jsonl'), 'a') as f:

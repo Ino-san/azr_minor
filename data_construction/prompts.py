@@ -474,6 +474,7 @@ def get_code_problem_generator_prompt(
             func_header=func_header[language],
             code_format=code_format[language],
             dict_example=dict_example[language],
+            example_code_format=example_code_format[language],
             language=language,
             remove_after_return_prompt=(remove_singleton_variables_prompt if remove_after_return else '\n'),
             remove_input_from_snippet_prompt=(remove_input_from_snippet_prompt if remove_input_from_snippet else '')

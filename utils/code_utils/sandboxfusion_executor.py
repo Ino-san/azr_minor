@@ -20,8 +20,8 @@ from azr_minor.utils.code_utils.templates import (
     EVAL_K_INPUT_PREDICTION_TEMPLATE,
     EVAL_K_OUTPUT_PREDICTION_TEMPLATE,
 )
-from absolute_zero_reasoner.utils.code_utils.checks import contains_banned_imports
-from absolute_zero_reasoner.utils.code_utils.parsers import parse_error
+from azr_minor.utils.code_utils.checks import contains_banned_imports
+from azr_minor.utils.code_utils.parsers import parse_error
 
 
 # Docker images

@@ -79,7 +79,7 @@ class RLHFDataset(Dataset):
                  ):
         if not isinstance(parquet_files, (List, ListConfig)):
             parquet_files = [parquet_files]
-
+        print('pf:', parquet_files)
         self.parquet_files = copy.deepcopy(parquet_files)
         self.original_parquet_files = copy.deepcopy(parquet_files)  # use for resume
         self.cache_dir = os.path.expanduser(cache_dir)

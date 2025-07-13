@@ -307,6 +307,7 @@ def has_test_input(snippet_code: str) -> bool:
 
 
 def parse_code_input_output(
+    language: str,
     input_str: str,
     parse_input: bool = True,
     parse_output: bool = True,
@@ -327,7 +328,7 @@ def parse_code_input_output(
         parse_output: Whether to parse the output
     """
     # Improved regex patterns with better whitespace handling and optional language specifiers
-    code_pattern = r"```(?:python\s*)?\n?(.*?)\n?```"
+    code_pattern = rf"```(?:{language}\s*)?\n?(.*?)\n?```"
     input_pattern = r"```input\s*\n?(.*?)\n?```"
     output_pattern = r"```output\s*\n?(.*?)\n?```"
 
@@ -376,7 +377,7 @@ def parse_code_input_output(
 
     if reject_test_input_in_code and has_test_input(code_snippet):
         return False, {}
-
+    """
     # Standardize function name to 'f'
     if f_replace_location == 'not_first':
         original_name = function_defs[0]
@@ -420,6 +421,7 @@ def parse_code_input_output(
     # if before_remove_comments != code_snippet:
     #     with open("changed_content.jsonl", "a") as f:
     #         f.write(json.dumps({"before": before_remove_comments, "after": code_snippet}) + "\n")
+    """
     return True, {"code": code_snippet, "input": input_snippet, "output": output_snippet, "imports": imports}
 
 
@@ -503,8 +505,8 @@ def parse_code_function(input_str: str) -> Tuple[bool, str]:
     return True, code_snippet
 
 
-def valid_code(solution_str: str, executor, banned_words: List[str]) -> Tuple[bool, str]:
-    success, result = parse_code_input_output(solution_str, parse_output=False)
+def valid_code(language: str, solution_str: str, executor, banned_words: List[str]) -> Tuple[bool, str]:
+    success, result = parse_code_input_output(language, solution_str, parse_output=False)
     if success:
         try:
             output, status = executor.apply(result['code'] + f'\nf({result["input"]})')

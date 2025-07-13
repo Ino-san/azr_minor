@@ -24,8 +24,8 @@ from verl.utils.fs import copy_local_path_from_hdfs
 from verl.utils import hf_tokenizer
 from verl.trainer.ppo.ray_trainer import ResourcePoolManager, Role
 
-from absolute_zero_reasoner.trainer.ppo.azr_ray_trainer import CodeIORayPPOTrainer
-from absolute_zero_reasoner.rewards.reward_managers import CodeIORewardManager
+from azr_minor.trainer.ppo.azr_ray_trainer import CodeIORayPPOTrainer
+from azr_minor.rewards.reward_managers import CodeIORewardManager
 
 
 @hydra.main(config_path='configs', config_name='azr_minor_ppo_trainer', version_base=None)
@@ -170,6 +170,7 @@ class TaskRunner:
             mapping[Role.RefPolicy] = global_pool_id
 
         reward_fn = CodeIORewardManager(
+            language=config.azr.language,
             tokenizer=tokenizer,
             num_examine=0,
             reward_fn_extraction_type=config.reward_fn.extraction_type,
@@ -188,6 +189,7 @@ class TaskRunner:
 
         # Note that we always use function-based RM for validation
         val_reward_fn = CodeIORewardManager(
+            language=config.azr.language,
             tokenizer=tokenizer,
             num_examine=1,
             reward_fn_extraction_type=config.reward_fn.extraction_type,
