@@ -72,6 +72,7 @@ class CodeIORewardManager():
         self.num_inputs = num_inputs
         self.code_f_reward_type = code_f_reward_type
         self.boxed_retry = boxed_retry
+        self.language = language
 
     @staticmethod
     def extract_input_output(extracted_content: str, return_input: bool = True, return_output: bool = False) -> Tuple[str, str]:
@@ -535,7 +536,6 @@ class CodeIORewardManager():
 
     def _get_problem_generator_rewards_and_valid_programs(
         self,
-        language: str,
         data_dicts: List[Dict],
         problem_type: str,
         n_samples: int,
@@ -548,7 +548,6 @@ class CodeIORewardManager():
         """This function uses samples to estimate the accuracy reward for each program, also computes the code complexity and mean edit distance of generated programs.
             Also returns the valid programs using filters.
             Args:
-                language: str: The target programming language.
                 data_dicts: List[Dict]: A list of data dictionaries.
                 problem_type: str: The type of problem.
                 n_samples: int: The number of samples to use.
@@ -603,7 +602,7 @@ class CodeIORewardManager():
                     data_dict['answer']['hidden_outputs'] = data_dict['answer']['outputs'][num_given_outputs:]
                     io_prompt = instruction_template.format(
                         get_code_problem_predictor_prompt(
-                            language=language,
+                            language=self.language,
                             problem_type=problem_type,
                             snippet=data_dict['answer']['snippet'],
                             message=data_dict['answer']['message'],
@@ -613,7 +612,7 @@ class CodeIORewardManager():
                 else:
                     io_prompt = instruction_template.format(
                         get_code_problem_predictor_prompt(
-                            language=language,
+                            language=self.language,
                             problem_type=pt,
                             snippet=data_dict['answer']['snippet'],
                             input_args=data_dict['answer']['input'],

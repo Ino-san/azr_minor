@@ -451,7 +451,7 @@ def get_code_problem_generator_prompt(
     if problem_type != 'code_f':
         output_key = 'output' if problem_type != 'code_e' else 'error'
         for i, snippet in enumerate(reference_snippets):
-            snippet_string += f"<snippet_{i}>\n```python\n{snippet['snippet']}\n```\n```input\n{snippet['input']}\n```\n```{output_key}\n{snippet['output']}\n```\n</snippet_{i}>\n"
+            snippet_string += f"<snippet_{i}>\n```{language}\n{snippet['snippet']}\n```\n```input\n{snippet['input']}\n```\n```{output_key}\n{snippet['output']}\n```\n</snippet_{i}>\n"
     if problem_type == "code_i":
         return code_input_prompt.format(
             Language=language_name[language],
@@ -541,6 +541,7 @@ def get_code_problem_predictor_prompt(language: str, problem_type: str, snippet:
             input_output_pairs_string += f"```input_{i}\n{input}\n```\n```output_{i}\n{output}\n```\n"
         return code_function_predictor_prompt.format(
             language=language,
+            func_header=func_header[language],
             seed_func=seed_func[language],
             input_output_pairs=input_output_pairs_string, 
             message=message)

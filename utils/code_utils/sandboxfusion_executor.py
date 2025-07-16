@@ -141,6 +141,7 @@ class SandboxfusionExecutor:
         max_workers: int = 1,
         use_china_mirror: bool = True,
     ) -> None:
+        self.language = language
         self.runner = DockerAPIRunner(use_china_mirror=use_china_mirror)
         running = self.runner.start()
         if not running:
@@ -166,8 +167,8 @@ class SandboxfusionExecutor:
             print(f"Error terminating pool: {e}")
             pass
 
-#    def cleanup(self):
-#        self.runner.stop()
+    def cleanup(self):
+        self.runner.stop()
 
     def process_generation_to_code(self, gens: str):
         return [g.strip().split('\n') for g in gens]
@@ -305,6 +306,9 @@ class SandboxfusionExecutor:
         if isinstance(imports, np.ndarray):
             imports = imports.tolist()
         if imports:
+            if self.language == 'cpp':
+                imports = list(set(imports) | {'#include <iostream>'})
+            #print('imports:', imports)
             code = '\n'.join(imports) + '\n' + code
         if contains_banned_imports(code=code, banned_keywords=banned_keywords, banned_keywords_for_errors_and_exceptions=banned_keywords_for_errors_and_exceptions if check_error else []):
             return False, None
@@ -326,11 +330,13 @@ class SandboxfusionExecutor:
                 code_snippet = CHECK_DETERMINISM_TEMPLATE_REPR[self.language].format(code=code, inputs=inputs)
             else:
                 code_snippet = RUN_CODE_TEMPLATE_REPR[self.language].format(code=code, inputs=inputs)
+            """
             if self.ast_check:
                 try:
                     ast.parse(code_snippet)
                 except:
                     return False, 'error'
+            """
             output, status = self.apply(code_snippet)
             return not 'error' in status.lower(), output
 
@@ -348,10 +354,12 @@ class SandboxfusionExecutor:
                 # taking [1:-1] to exclude prefix space and suffix newline
                 return response.run_result.stdout.split('<FINAL_REPR_SYMBOL>')[-1][1:-1], 'done'
             else:
+                print('Error in response:', response.status, response.run_result.stderr)
                 return '', 'error'
 
         except Exception as e:
             error_msg = f"Execution error: {str(e)}"
+            print(code, error_msg)
             return error_msg, 'error'
 
 

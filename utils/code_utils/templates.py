@@ -65,11 +65,37 @@ std::cout << "<FINAL_REPR_SYMBOL>" << (eval({gold_output}) == eval({agent_output
 fmt.Println("<FINAL_REPR_SYMBOL>", eval({gold_output}) == eval({agent_output}))""",
 }
 
-CHECK_DETERMINISM_TEMPLATE = """{code}
+CHECK_DETERMINISM_TEMPLATE = {
+"python": """{code}
 returns = f({inputs})
 if returns != f({inputs}):
     raise Exception('Non-deterministic code')
-repr(returns)"""
+repr(returns)""",
+"cpp": """{code}
+auto returns = f({inputs});
+if (returns != f({inputs})) {{
+    throw std::runtime_error("Non-deterministic code");
+}}
+return returns;""",
+"js": """{code}
+let returns = f({inputs});
+if (returns !== f({inputs})) {{
+    throw new Error('Non-deterministic code');
+}}
+return returns;""",
+"java": """{code}
+Object returns = f({inputs});
+if (!returns.equals(f({inputs}))) {{
+    throw new Exception('Non-deterministic code');
+}}
+return returns;""",
+"go": """{code}
+returns := f({inputs})
+if returns != f({inputs}) {{
+    panic("Non-deterministic code")
+}}
+return returns;"""
+}
 
 CHECK_DETERMINISM_TEMPLATE_REPR = {
 "python": """{code}
@@ -77,29 +103,36 @@ returns = f({inputs})
 if returns != f({inputs}):
     raise Exception('Non-deterministic code')
 print('<FINAL_REPR_SYMBOL>', repr(returns))""",
+
 "javascript": """{code}
 let returns = f({inputs});
-if (returns !== f({inputs})) {
+if (returns !== f({inputs})) {{
     throw new Error('Non-deterministic code');
-}
+}}
 console.log('<FINAL_REPR_SYMBOL>', returns)""",
+
 "java": """{code}
 Object returns = f({inputs});
-if (!returns.equals(f({inputs}))) {
+if (!returns.equals(f({inputs}))) {{
     throw new Exception('Non-deterministic code');
-}
+}}
 System.out.println("<FINAL_REPR_SYMBOL>" + returns);""",
+
 "cpp": """{code}
-auto returns = f({inputs});
-if (returns != f({inputs})) {
-    throw std::runtime_error("Non-deterministic code");
-}
-std::cout << "<FINAL_REPR_SYMBOL>" << returns << std::endl;""",
+int main() {{
+    auto returns = f({inputs});
+    if (returns != f({inputs})) {{
+        throw std::runtime_error("Non-deterministic code");
+    }}
+    std::cout << "<FINAL_REPR_SYMBOL>" << returns << std::endl;
+    return 0;
+}}""",
+
 "go": """{code}
 returns := f({inputs})
-if returns != f({inputs}) {
+if returns != f({inputs}) {{
     panic("Non-deterministic code")
-}
+}}
 fmt.Println("<FINAL_REPR_SYMBOL>", returns)""",
 }
 
@@ -113,7 +146,7 @@ List<Boolean> acc_list = new ArrayList<>();""",
 "cpp": """{code}
 std::vector<bool> acc_list;""",
 "go": """{code}
-acc_list := []bool{}""",
+acc_list := []bool{{}}""",
 }
 
 append_string = {
@@ -121,26 +154,26 @@ append_string = {
     acc_list.append({gold_output} == f({inp}))
 except:
     acc_list.append(False)""",
-"javascript": """\ntry {
+"javascript": """\ntry {{
     acc_list.push({gold_output} === f({inp}));
-} catch {
+}} catch {{
     acc_list.push(false);
-}""",
-"java": """\ntry {
+}}""",
+"java": """\ntry {{
     acc_list.add({gold_output} == f({inp}));
-} catch {
+}} catch {{
     acc_list.add(false);
-}""",
-"cpp": """\ntry {
+}}""",
+"cpp": """\ntry {{
     acc_list.push_back({gold_output} == f({inp}));
-} catch (...) {
+}} catch (...) {{
     acc_list.push_back(false);
-}""",
-"go": """\ntry {
+}}""",
+"go": """\ntry {{
     acc_list = append(acc_list, {gold_output} == f({inp}))
-} catch {
+}} catch {{
     acc_list = append(acc_list, false)
-}""",
+}}""",
     }
 
 repr_string = {

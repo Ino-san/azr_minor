@@ -2,8 +2,15 @@ import ast
 import re
 from typing import List
 
+import_string = {
+    "python": "from|import",
+    "js": "import",
+    "java": "import",
+    "cpp": "#include",
+    "go": "import",
+}
 
-def parse_imports(code_snippet: str) -> List[str]:
+def parse_imports(code_snippet: str, language: str) -> List[str]:
     imports = []
     try:
         tree = ast.parse(code_snippet)
@@ -28,7 +35,7 @@ def parse_imports(code_snippet: str) -> List[str]:
                         )
                 imports.append(import_line)
     except Exception as e:
-        import_pattern = r"^\s*(?:from|import)\s+.*$"
+        import_pattern = rf"^\s*(?:{import_string[language]})\s+.*$"
         imports = [i.strip() for i in re.findall(import_pattern, code_snippet, re.MULTILINE)]
     return imports
 
@@ -194,6 +201,66 @@ def remove_print_statements(code: str) -> str:
     tree = PrintRemover().visit(tree)
     ast.fix_missing_locations(tree)
     return ast.unparse(tree)
+
+
+def extract_function_from_cpp_string(cpp_code_content: str) -> str:
+    extracted_lines = []
+    in_function = False
+    brace_level = 0
+    function_signature_line_buffer = []
+
+    # 関数のシグネチャを検出するための正規表現
+    function_start_pattern = re.compile(r'\b' + re.escape("f") + r'\s*\(')
+
+    # 文字列を改行で分割して行リストにする
+    lines = cpp_code_content.splitlines(keepends=True) # keepends=Trueで改行文字を保持
+
+    for line in lines:
+        stripped_line = line.strip()
+
+        if not in_function:
+            # まだ関数定義に入っていない場合
+            if function_start_pattern.search(stripped_line):
+                # 関数シグネチャの開始を検出
+                function_signature_line_buffer = [line]
+                
+                current_line_open_braces = stripped_line.count('{')
+                current_line_close_braces = stripped_line.count('}')
+                brace_level += current_line_open_braces
+                brace_level -= current_line_close_braces
+
+                if brace_level > 0: # もしこの行でブレースが開いていれば、関数本体に入ったとみなす
+                    extracted_lines.extend(function_signature_line_buffer)
+                    in_function = True
+                    function_signature_line_buffer = []
+            elif function_signature_line_buffer:
+                # シグネチャが複数行にわたる可能性があるため、バッファリングを続ける
+                function_signature_line_buffer.append(line)
+                
+                current_line_open_braces = stripped_line.count('{')
+                current_line_close_braces = stripped_line.count('}')
+                brace_level += current_line_open_braces
+                brace_level -= current_line_close_braces
+
+                if brace_level > 0: # 最初の '{' が見つかった場合
+                    extracted_lines.extend(function_signature_line_buffer)
+                    in_function = True
+                    function_signature_line_buffer = []
+                elif brace_level < 0: # シグネチャ行に閉じブレースがあったが開きブレースがなかった場合（エラーケース）
+                    function_signature_line_buffer = []
+                    brace_level = 0 # リセット
+        else:
+            # 関数本体内にある場合
+            extracted_lines.append(line)
+            brace_level += stripped_line.count('{')
+            brace_level -= stripped_line.count('}')
+
+            if brace_level == 0:
+                # ブレースレベルが0に戻ったら、関数の終わり
+                in_function = False
+                return "".join(extracted_lines) # 最初の関数定義が見つかったので終了
+
+    return "" # 関数が見つからなかった場合
 
 
 if __name__ == "__main__":

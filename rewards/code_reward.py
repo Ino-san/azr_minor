@@ -18,6 +18,7 @@ from azr_minor.utils.code_utils.parsers import (
     remove_comments_and_docstrings,
     remove_any_not_definition_imports,
     remove_print_statements,
+    extract_function_from_cpp_string
 )
 
 
@@ -367,6 +368,7 @@ def parse_code_input_output(
     input_snippet = input_match.group(1).strip() if parse_input else ""
     output_snippet = output_match.group(1).strip() if parse_output else ""
 
+    """
     # Enhanced function detection and validation
     function_defs = re.findall(r"^\s*def\s+(\w+)\s*\(", code_snippet, re.MULTILINE)
     if not function_defs:
@@ -377,7 +379,6 @@ def parse_code_input_output(
 
     if reject_test_input_in_code and has_test_input(code_snippet):
         return False, {}
-    """
     # Standardize function name to 'f'
     if f_replace_location == 'not_first':
         original_name = function_defs[0]
@@ -402,9 +403,12 @@ def parse_code_input_output(
             "f(",
             code_snippet
         )
-
-    imports: List[str] = parse_imports(code_snippet)
-
+    """
+    imports: List[str] = parse_imports(code_snippet, language)
+    if language in ['cpp', 'java', 'go']:
+        # For C++, Java, and Go, we extract the function definition
+        code_snippet = extract_function_from_cpp_string(code_snippet)
+    """
     # before_remove_comments = code_snippet
     # remove comments and docstrings
     if remove_comments:

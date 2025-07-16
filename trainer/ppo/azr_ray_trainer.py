@@ -49,12 +49,20 @@ seed_program = {
 "js": """function f(a) {
     return a;
 }""",
-"cpp": """string f(string a) {
+"cpp": """std::string f(std::string a) {
     return a;
 }""",
 "go": """func f(a int) int {
     return a;
 }"""      
+}
+
+imports = {
+"python": [],
+"java": ["import java.util.*;"],
+"js": ["import * as utils from './utils.js';"],
+"cpp": ["#include <iostream>", "#include <string>"],
+"go": ["import (", "    \"fmt\"", "    \"strings\"", ")"]
 }
 
 
@@ -1034,7 +1042,7 @@ class CodeIORayPPOTrainer(ReasonRLRayPPOTrainer):
             metrics.update(train_metrics)
             batch.batch['token_level_scores'] = reward_tensor
 
-            if not self.config.actor_rollout_ref.actor.get('use_kl_loss', False):
+            if self.config.algorithm.use_kl_in_reward:
                 batch, kl_metrics = apply_kl_penalty(batch,
                                                 kl_ctrl=self.kl_ctrl,
                                                 kl_penalty=self.config.algorithm.kl_penalty)
@@ -1046,7 +1054,8 @@ class CodeIORayPPOTrainer(ReasonRLRayPPOTrainer):
                                     adv_estimator=self.config.algorithm.adv_estimator,
                                     gamma=self.config.algorithm.gamma,
                                     lam=self.config.algorithm.lam,
-                                    num_repeat=self.config.actor_rollout_ref.rollout.n)
+                                    num_repeat=self.config.actor_rollout_ref.rollout.n,
+                                    config=self.config.algorithm)
 
         gc.collect()
         return batch, metrics
@@ -1055,11 +1064,11 @@ class CodeIORayPPOTrainer(ReasonRLRayPPOTrainer):
         # Initialize with seed program using the coordinator
         if ('code_i' in problem_types or 'code_o' in problem_types) and ray.get(self.dataset_manager.get_dataset.remote('seed')) == []:
             ray.get(self.dataset_manager.update_seed.remote([
-                {'snippet': seed_program[self.config.azr.language], 'input': '"Hello world"', 'output': '"Hello world"', 'imports': [], 'original_snippet': seed_program[self.config.azr.language], 'composite_functions': []}
+                {'snippet': seed_program[self.config.azr.language], 'input': '"Hello world"', 'output': '"Hello world"', 'imports': imports[self.config.azr.language], 'original_snippet': seed_program[self.config.azr.language], 'composite_functions': []}
             ]))
         if 'code_e' in problem_types and ray.get(self.dataset_manager.get_dataset.remote('error_seed')) == []:
             ray.get(self.dataset_manager.update_error_seed.remote([
-                {'snippet': seed_program[self.config.azr.language], 'input': '"Hello world"', 'output': 'NoError', 'imports': [], 'original_snippet': seed_program[self.config.azr.language], 'composite_functions': []}
+                {'snippet': seed_program[self.config.azr.language], 'input': '"Hello world"', 'output': 'NoError', 'imports': imports[self.config.azr.language], 'original_snippet': seed_program[self.config.azr.language], 'composite_functions': []}
             ]))
         if 'code_f' in problem_types and ray.get(self.dataset_manager.get_dataset.remote('problem')) == []:
             ray.get(self.dataset_manager.add_problem_batch.remote([
@@ -1068,7 +1077,7 @@ class CodeIORayPPOTrainer(ReasonRLRayPPOTrainer):
                     'inputs': ['"Hello world"', '1', "dict(a=1, b=2)", '(1.1, 1.2, 1.3)', '"[[1, 0, 0], [0, 0, 0], [0, 0, 0]]"', '1001101100010001'],
                     'outputs': ['"Hello world"', '1', "dict(a=1, b=2)", '(1.1, 1.2, 1.3)', '"[[1, 0, 0], [0, 0, 0], [0, 0, 0]]"', '1001101100010001'],
                     'message': 'Write a function that returns whatever you input',
-                    'imports': [],
+                    'imports': imports[self.config.azr.language],
                 }
             ], self.global_steps))
 
@@ -1108,7 +1117,6 @@ class CodeIORayPPOTrainer(ReasonRLRayPPOTrainer):
                         'do_sample': True,
                         'validate': True,
                     }
-
                     # pad to be divisible by dp_size
                     gen_batch_padded, pad_size = pad_dataproto_to_divisor(gen_batch, self.actor_rollout_wg.world_size)
                     output_gen_batch_padded = self.actor_rollout_wg.generate_sequences(gen_batch_padded)
@@ -1703,7 +1711,7 @@ class CodeIORayPPOTrainer(ReasonRLRayPPOTrainer):
                     if self.global_steps - self._last_cleanup_step >= self._cleanup_frequency:
                         PrettyPrinter.section_header("Periodic Cleanup")
                         with marked_timer('cleanup', timing_raw):
-                            if self.executor == 'qwq':
+                            if self.config.azr.executor == 'qwq':
                                 self.cleanup()
                         self._last_cleanup_step = self.global_steps
 
@@ -1983,7 +1991,7 @@ class CodeIORayPPOTrainer(ReasonRLRayPPOTrainer):
             reward_tensor_lst.append(reward_tensor)
             data_source_lst.append(test_batch.non_tensor_batch.get('data_source', ['unknown'] * reward_tensor.shape[0]))
 
-        self._maybe_log_val_generations_to_wandb(inputs=sample_inputs, outputs=sample_outputs, scores=sample_scores)
+        self._maybe_log_val_generations(inputs=sample_inputs, outputs=sample_outputs, scores=sample_scores)
 
         reward_tensor = torch.cat(reward_tensor_lst, dim=0).sum(-1).cpu()  # (batch_size,)
         data_sources = np.concatenate(data_source_lst, axis=0)

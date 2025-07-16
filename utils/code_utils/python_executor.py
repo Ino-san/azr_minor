@@ -229,7 +229,7 @@ class PythonExecutor:
                 valid_k_agent_inputs.append(k_agent_input)
             except:
                 invalid_lists.append(0.0)
-        acc_list, status = self.apply(EVAL_K_INPUT_PREDICTION_TEMPLATE(code=code, gold_output=gold_output, k_agent_inputs=valid_k_agent_inputs))
+        acc_list, status = self.apply(EVAL_K_INPUT_PREDICTION_TEMPLATE(language='python', code=code, gold_output=gold_output, k_agent_inputs=valid_k_agent_inputs))
         assert 'error' not in status.lower()
         output_acc = eval(acc_list) + invalid_lists
         assert len(output_acc) == len(k_agent_inputs)
@@ -251,7 +251,7 @@ class PythonExecutor:
                     invalid_lists.append(0.0)
             except:
                 invalid_lists.append(0.0)
-        acc_list, status = self.apply(EVAL_K_OUTPUT_PREDICTION_TEMPLATE(code=code, gold_output=gold_output, k_agent_outputs=valid_k_agent_outputs))
+        acc_list, status = self.apply(EVAL_K_OUTPUT_PREDICTION_TEMPLATE(language='python', code=code, gold_output=gold_output, k_agent_outputs=valid_k_agent_outputs))
         assert 'error' not in status.lower()
         output_acc = eval(acc_list) + invalid_lists
         assert len(output_acc) == len(k_agent_outputs)

@@ -9,7 +9,6 @@ import pandas as pd
 from azr_minor.rewards.code_reward import format_python_code
 from azr_minor.data_construction.prompts import get_code_problem_predictor_prompt
 from azr_minor.data_construction.process_data import instruction_following
-"""
 def process_livecodebench_execution(row):
     # Extract all function names from the code
     program_name_matches = re.findall(r'def\s+(\w+)\s*\(', row['problem'])
@@ -38,7 +37,6 @@ def process_livecodebench_execution(row):
 
     return row
 
-"""
 def add_imports(problem):
     # Add necessary imports based on the content of the problem
     if 'collections' in problem:
@@ -85,7 +83,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     # 283, 452, 510
-    ds = load_dataset('xhwl/cruxeval-x')['test']
+    ds = load_dataset('cruxeval-org/cruxeval')['test']
     ds = ds.map(lambda x: {'problem': format_python_code(x['code'])})
     output_data = []
     for i, data in enumerate(tqdm(ds, desc="Processing CruxEval")):
@@ -137,7 +135,6 @@ if __name__ == '__main__':
         })
 
     # another ds:
-    """
     ds = load_dataset('livecodebench/execution')['test']
     ds = ds.map(lambda x: {'problem': format_python_code(x['code'])})
     ds = ds.remove_columns(['code'])
@@ -168,7 +165,6 @@ if __name__ == '__main__':
                 'output': data['output'],
             }
         })
-    """
 
     df = pd.DataFrame(output_data)
     if args.max_length > 0:
