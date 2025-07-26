@@ -12,7 +12,11 @@ console.log('<FINAL_REPR_SYMBOL>', f({inputs}))""",
 "java": """{code}
 System.out.println("<FINAL_REPR_SYMBOL>" + f({inputs}));""",
 "cpp": """{code}
-std::cout << "<FINAL_REPR_SYMBOL>" << f({inputs}) << std::endl;""",
+int main() {{
+    std::cout << "<FINAL_REPR_SYMBOL> " << f({inputs}) << std::endl;
+    return 0;
+}}
+""",
 "go": """{code}
 fmt.Println("<FINAL_REPR_SYMBOL>", f({inputs}))""",
 }
@@ -28,7 +32,11 @@ console.log('<FINAL_REPR_SYMBOL>', f({inputs}))""",
 "java": """{code}
 System.out.println("<FINAL_REPR_SYMBOL>" + f({inputs}));""",
 "cpp": """{code}
-std::cout << "<FINAL_REPR_SYMBOL>" << f({inputs}) << std::endl;""",                                        
+int main() {{
+    std::cout << "<FINAL_REPR_SYMBOL> " << f({inputs}) << std::endl;
+    return 0;
+}}
+""",                                     
 "go": """{code}
 fmt.Println("<FINAL_REPR_SYMBOL>", f({inputs}))""",
 }
@@ -44,7 +52,11 @@ console.log('<FINAL_REPR_SYMBOL>', {gold_output} == f({agent_input}))""",
 "java": """{code}
 System.out.println("<FINAL_REPR_SYMBOL>" + ({gold_output} == f({agent_input})));""",
 "cpp": """{code}
-std::cout << "<FINAL_REPR_SYMBOL>" << ({gold_output} == f({agent_input})) << std::endl;""",
+int main() {{
+    std::cout << "<FINAL_REPR_SYMBOL> " << ({gold_output} == f({agent_input})) << std::endl;
+    return 0;
+}}
+""",
 "go": """{code}
 fmt.Println("<FINAL_REPR_SYMBOL>", {gold_output} == f({agent_input}))""",
 }
@@ -60,7 +72,11 @@ console.log('<FINAL_REPR_SYMBOL>', eval({gold_output}) == eval({agent_output}))"
 "java": """{code}
 System.out.println("<FINAL_REPR_SYMBOL>" + (eval({gold_output}) == eval({agent_output})));""",
 "cpp": """{code}
-std::cout << "<FINAL_REPR_SYMBOL>" << (eval({gold_output}) == eval({agent_output})) << std::endl;""",
+int main() {{
+    std::cout << "<FINAL_REPR_SYMBOL> " << (eval({gold_output}) == eval({agent_output})) << std::endl;
+    return 0;
+}}
+""",
 "go": """{code}
 fmt.Println("<FINAL_REPR_SYMBOL>", eval({gold_output}) == eval({agent_output}))""",
 }
@@ -124,7 +140,7 @@ int main() {{
     if (returns != f({inputs})) {{
         throw std::runtime_error("Non-deterministic code");
     }}
-    std::cout << "<FINAL_REPR_SYMBOL>" << returns << std::endl;
+    std::cout << "<FINAL_REPR_SYMBOL> " << returns << std::endl;
     return 0;
 }}""",
 
@@ -144,7 +160,9 @@ let acc_list = []""",
 "java": """{code}
 List<Boolean> acc_list = new ArrayList<>();""",
 "cpp": """{code}
-std::vector<bool> acc_list;""",
+int main() {
+    std::cout << "<FINAL_REPR_SYMBOL> [" ;
+""",
 "go": """{code}
 acc_list := []bool{{}}""",
 }
@@ -164,11 +182,9 @@ except:
 }} catch {{
     acc_list.add(false);
 }}""",
-"cpp": """\ntry {{
-    acc_list.push_back({gold_output} == f({inp}));
-}} catch (...) {{
-    acc_list.push_back(false);
-}}""",
+"cpp": """    std::cout << ({gold_output} == f({inp})) << ", ";
+""",
+
 "go": """\ntry {{
     acc_list = append(acc_list, {gold_output} == f({inp}))
 }} catch {{
@@ -180,7 +196,12 @@ repr_string = {
 "python": {True: """\nprint('<FINAL_REPR_SYMBOL>', repr(acc_list))""", False: """\nacc_list"""},
 "javascript": {True: """\nconsole.log('<FINAL_REPR_SYMBOL>', acc_list)""", False: """\nacc_list"""},
 "java": {True: """\nSystem.out.println("<FINAL_REPR_SYMBOL>" + acc_list);""", False: """\nacc_list"""},
-"cpp": {True: """\nstd::cout << "<FINAL_REPR_SYMBOL>" << acc_list << std::endl;""", False: """\nacc_list"""},
+"cpp": {
+True: """    return 0;
+}""", 
+False: """int main () {{
+    acc_list
+"""},
 "go": {True: """\nfmt.Println("<FINAL_REPR_SYMBOL>", acc_list)""", False: """\nacc_list"""},
 }
 

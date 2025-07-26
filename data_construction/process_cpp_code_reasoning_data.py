@@ -15,8 +15,8 @@ def extract_input_from_cpp_string(cpp_code_content: str) -> str:
     input_match = re.search(r'candidate\(\((.|\n)*?\=\=', cpp_code_content)
     if input_match:
         input = input_match.group(0)
-        input = re.sub(r'candidate\(\(', '', input)
-        input = re.sub(r'\)\) ==', '', input)
+        input = re.sub(r'candidate\(', '', input)
+        input = re.sub(r'\) ==', '', input)
         return input
     else:
         raise ValueError("Could not find input in C++ code content") 
@@ -25,7 +25,7 @@ def extract_output_from_cpp_string(cpp_code_content: str) -> str:
     output_match = re.search(r'\=\=(.|\n)*', cpp_code_content)
     if output_match:
         output = output_match.group(0)
-        output = re.sub(r'\=\= \(', '', output)
+        output = re.sub(r'\=\= ', '', output)
         output = re.sub(r'\);\n\}\n', '', output)
         return output
     else:
@@ -34,14 +34,14 @@ def extract_output_from_cpp_string(cpp_code_content: str) -> str:
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--max_length', type=int, default=-1)
-    parser.add_argument('--language', type=str, default="python",)
+    parser.add_argument('--language', type=str, default="cpp",)
     args = parser.parse_args()
 
     # 283, 452, 510
     ds = load_dataset('xhwl/cruxeval-x')['Cpp']
     ds = ds.map(lambda x: {'problem': '\n'.join(parse_imports(x['code'], 'cpp')) + '\n' + extract_function_from_cpp_string(x['code']),
-                            'input': extract_input_from_cpp_string(x['code']),
-                            'output': extract_output_from_cpp_string(x['code'])
+                            'input': extract_input_from_cpp_string(x['output_reasoning']),
+                            'output': extract_output_from_cpp_string(x['input_reasoning'])
                            })
     output_data = []
     for i, data in enumerate(tqdm(ds, desc="Processing CruxEval-X")):

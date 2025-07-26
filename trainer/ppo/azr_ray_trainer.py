@@ -49,7 +49,7 @@ seed_program = {
 "js": """function f(a) {
     return a;
 }""",
-"cpp": """std::string f(std::string a) {
+"cpp": """auto f(auto a) {
     return a;
 }""",
 "go": """func f(a int) int {
@@ -65,6 +65,13 @@ imports = {
 "go": ["import (", "    \"fmt\"", "    \"strings\"", ")"]
 }
 
+seed_io = {
+    "python": ['"Hello world"', '1', "dict(a=1, b=2)", '(1.1, 1.2, 1.3)', '"[[1, 0, 0], [0, 0, 0], [0, 0, 0]]"', '1001101100010001'],
+    "java": ['"Hello world"', '1', 'new HashMap<String, Integer>() {{ put("a", 1); put("b", 2); }}', '(1.1, 1.2, 1.3)', '"[[1, 0, 0], [0, 0, 0], [0, 0, 0]]"', '1001101100010001'],
+    "js": ['"Hello world"', '1', '({a: 1, b: 2})', '(1.1, 1.2, 1.3)', '"[[1, 0, 0], [0, 0, 0], [0, 0, 0]]"', '1001101100010001'],
+    "cpp": ['"Hello world"', '1', 'std::vector<int> a = {1, 2, 3};', '(1.1, 1.2, 1.3)', '"[[1, 0, 0], [0, 0, 0], [0, 0, 0]]"', '1001101100010001'],
+    "go": ['"Hello world"', '1', 'a := []int{1, 2, 3}', '(1.1, 1.2, 1.3)', '"[[1, 0, 0], [0, 0, 0], [0, 0, 0]]"', '1001101100010001'],
+}
 
 def create_default_dict():
     return defaultdict(int)
@@ -953,13 +960,13 @@ class CodeIORayPPOTrainer(ReasonRLRayPPOTrainer):
                 for program in random.sample(valid_programs, max_print):
                     PrettyPrinter.status(f"PROBLEM TYPE", problem_type, "info")
                     if 'code_f' not in problem_type:
-                        PrettyPrinter.code_block(program['snippet'], "python")
+                        PrettyPrinter.code_block(program['snippet'], self.config.azr.language)
                         PrettyPrinter.status("INPUT", program['input'], "info")
                         PrettyPrinter.status("OUTPUT", program['output'], "info")
                         PrettyPrinter.status("THOUGHT", program['thought'], "info")
                         PrettyPrinter.status("COMPOSITE FUNCTION", "YES!" if len(program['composite_functions']) > 0 else "NO!", "info")
                     else:
-                        PrettyPrinter.code_block(program['snippet'], "python")
+                        PrettyPrinter.code_block(program['snippet'], self.config.azr.language)
                         PrettyPrinter.status("INPUT", program['inputs'], "info")
                         PrettyPrinter.status("OUTPUT", program['outputs'], "info")
                         PrettyPrinter.status("MESSAGE", program['message'], "info")
@@ -977,8 +984,8 @@ class CodeIORayPPOTrainer(ReasonRLRayPPOTrainer):
                         PrettyPrinter.status("OUTPUT", program['output'], "info")
                         PrettyPrinter.status("THOUGHT", program['thought'], "info")
                     else:
-                        PrettyPrinter.code_block(program['answer']['snippet'], "python")
-                        PrettyPrinter.code_block(program['answer']['gold_program'], "python (gold)")
+                        PrettyPrinter.code_block(program['answer']['snippet'], self.config.azr.language)
+                        PrettyPrinter.code_block(program['answer']['gold_program'], f"{self.config.azr.language} (gold)")
                         PrettyPrinter.status("HIDDEN INPUT", program['hidden_inputs'], "info")
                         PrettyPrinter.status("HIDDEN OUTPUT", program['hidden_outputs'], "info")
                         PrettyPrinter.status("GIVEN INPUT", program['given_inputs'], "info")
@@ -1074,8 +1081,8 @@ class CodeIORayPPOTrainer(ReasonRLRayPPOTrainer):
             ray.get(self.dataset_manager.add_problem_batch.remote([
                 {
                     'snippet': seed_program[self.config.azr.language],
-                    'inputs': ['"Hello world"', '1', "dict(a=1, b=2)", '(1.1, 1.2, 1.3)', '"[[1, 0, 0], [0, 0, 0], [0, 0, 0]]"', '1001101100010001'],
-                    'outputs': ['"Hello world"', '1', "dict(a=1, b=2)", '(1.1, 1.2, 1.3)', '"[[1, 0, 0], [0, 0, 0], [0, 0, 0]]"', '1001101100010001'],
+                    'inputs': seed_io[self.config.azr.language],
+                    'outputs': seed_io[self.config.azr.language],
                     'message': 'Write a function that returns whatever you input',
                     'imports': imports[self.config.azr.language],
                 }
@@ -1149,6 +1156,7 @@ class CodeIORayPPOTrainer(ReasonRLRayPPOTrainer):
                             code_location=self.config.azr.reward.generation_reward_config.code_location,
                         )
                         if success:
+                            print(result)
                             code_validity, output = self._executor.check_all(
                                 code=result['code'],
                                 inputs=result['input'],
@@ -1992,6 +2000,7 @@ class CodeIORayPPOTrainer(ReasonRLRayPPOTrainer):
             data_source_lst.append(test_batch.non_tensor_batch.get('data_source', ['unknown'] * reward_tensor.shape[0]))
 
         self._maybe_log_val_generations(inputs=sample_inputs, outputs=sample_outputs, scores=sample_scores)
+        
 
         reward_tensor = torch.cat(reward_tensor_lst, dim=0).sum(-1).cpu()  # (batch_size,)
         data_sources = np.concatenate(data_source_lst, axis=0)

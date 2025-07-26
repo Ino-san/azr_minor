@@ -68,14 +68,14 @@ function f(name, info) {
 ```""",
 "cpp": """
 ```cpp
-int f(std::string name, std::map<std::string, int> info) {
+int f(std::string name, int age) {
     // code logic here
     return result;
 }
 ```""",
 "go": """
 ```go
-func f(name string, info map[string]int) int {
+func f(name string, age int) int {
     // code logic here
     return result;
 }
@@ -149,6 +149,8 @@ Using the reference code snippets provided below as examples, design a new and u
   * Date/time operations
   * I/O operations (reading files, network requests)
   * Printing or logging
+  * Class definitions
+  * Custom types
   * Any external state
 - Ensure execution completes within 10 seconds on a modern CPU
 - All imports and class definitions should be at the very top of the code snippet
@@ -167,6 +169,7 @@ arg1, arg2, ...
 ```
 
 ### Example Format:
+{example_code_format}
 
 ```input
 'John', {dict_example}
@@ -216,7 +219,8 @@ Using the reference code snippets provided below as examples, design a new and u
 arg1, arg2, ...
 ```
 
-### Example Format:{example_code_format}
+### Example Format:
+{example_code_format}
 
 ```input
 'John', {dict_example}
@@ -266,7 +270,8 @@ Using the reference code snippets provided below as examples, design a new and u
 arg1, arg2, ...
 ```
 
-### Example Format:{example_code_format}
+### Example Format:
+{example_code_format}
 
 ```input
 'John', {dict_example}
@@ -458,6 +463,7 @@ def get_code_problem_generator_prompt(
             func_header=func_header[language],
             code_format=code_format[language],
             dict_example=dict_example[language],
+            example_code_format=example_code_format[language],
             remove_after_return_prompt=(remove_singleton_variables_prompt if remove_after_return else '\n'),
             remove_input_from_snippet_prompt=(remove_input_from_snippet_prompt if remove_input_from_snippet else '')
         ).replace(

@@ -186,7 +186,7 @@ class SandboxfusionExecutor:
             except:
                 return '', 'error'
         return self.apply(code_snippet)
-
+    #unused
     def validate_code(self, code: str, inputs: str, imports: List[str] = []) -> bool:
         if isinstance(imports, np.ndarray):
             imports = imports.tolist()
@@ -207,6 +207,7 @@ class SandboxfusionExecutor:
         if imports:
             code = '\n'.join(imports) + '\n' + code
         code_snippet = EVAL_INPUT_PREDICTION_TEMPLATE_REPR[self.language].format(code=code, gold_output=gold_output, agent_input=agent_input)
+
         if self.ast_check:
             try:
                 ast.parse(code_snippet)
@@ -257,6 +258,7 @@ class SandboxfusionExecutor:
             imports = imports.tolist()
         if imports:
             code = '\n'.join(imports) + '\n' + code
+        """
         invalid_lists = []
         valid_k_agent_inputs = []
         for k_agent_input in k_agent_inputs:
@@ -267,31 +269,33 @@ class SandboxfusionExecutor:
                 invalid_lists.append(0.0)
         acc_list, status = self.apply(EVAL_K_INPUT_PREDICTION_TEMPLATE(language=self.language, code=code, gold_output=gold_output, k_agent_inputs=valid_k_agent_inputs, repr_output=True))
         assert 'error' not in status.lower()
-        output_acc = eval(acc_list) + invalid_lists
+        output_acc = acc_list + invalid_lists
         assert len(output_acc) == len(k_agent_inputs)
         return output_acc
+        """
+        return [self.eval_input_prediction(code, gold_output, k_agent_input) for k_agent_input in k_agent_inputs]
 
     def eval_k_output_prediction(self, code: str, gold_output: str, k_agent_outputs: List[str], imports: List[str] = []) -> List[float]:
         if isinstance(imports, np.ndarray):
             imports = imports.tolist()
         if imports:
             code = '\n'.join(imports) + '\n' + code
+        """
         invalid_lists = []
-        valid_k_agent_outputs = []
-        for k_agent_output in k_agent_outputs:
+        valid_k_agent_inputs = []
+        for k_agent_input in k_agent_inputs:
             try:
-                if k_agent_output != '':
-                    ast.parse(f'f({k_agent_output})')
-                    valid_k_agent_outputs.append(k_agent_output)
-                else:
-                    invalid_lists.append(0.0)
+                ast.parse(f'f({k_agent_input})')
+                valid_k_agent_inputs.append(k_agent_input)
             except:
                 invalid_lists.append(0.0)
-        acc_list, status = self.apply(EVAL_K_OUTPUT_PREDICTION_TEMPLATE(language=self.language, code=code, gold_output=gold_output, k_agent_outputs=valid_k_agent_outputs, repr_output=True))
+        acc_list, status = self.apply(EVAL_K_INPUT_PREDICTION_TEMPLATE(language=self.language, code=code, gold_output=gold_output, k_agent_inputs=valid_k_agent_inputs, repr_output=True))
         assert 'error' not in status.lower()
-        output_acc = eval(acc_list) + invalid_lists
-        assert len(output_acc) == len(k_agent_outputs)
+        output_acc = acc_list + invalid_lists
+        assert len(output_acc) == len(k_agent_inputs)
         return output_acc
+        """
+        return [self.eval_output_prediction(code, gold_output, k_agent_output) for k_agent_output in k_agent_outputs]
 
     def check_all(
         self,
@@ -352,14 +356,14 @@ class SandboxfusionExecutor:
             )
             if response.status == RunStatus.Success:
                 # taking [1:-1] to exclude prefix space and suffix newline
+                #print(response.run_result.stdout)
                 return response.run_result.stdout.split('<FINAL_REPR_SYMBOL>')[-1][1:-1], 'done'
             else:
-                print('Error in response:', response.status, response.run_result.stderr)
+                #print('Error in response:', response.run_result.stderr)
                 return '', 'error'
 
         except Exception as e:
             error_msg = f"Execution error: {str(e)}"
-            print(code, error_msg)
             return error_msg, 'error'
 
 

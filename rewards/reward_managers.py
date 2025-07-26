@@ -465,6 +465,7 @@ class CodeIORewardManager():
                 else:
                     hidden_inputs = data_dict['hidden_inputs']
                     hidden_outputs = data_dict['hidden_outputs']
+                    
                 if not data_dicts[i]['format_score']: # early stop if the format is not correct
                     acc_reward = 0.
                 elif problem_types[i].endswith('code_i'):
@@ -725,8 +726,8 @@ class CodeIORewardManager():
                 batched_responses.append(batch_dict)
             df = pd.DataFrame(batched_responses)
 
-            # estimating accuracy using python executor
-            PrettyPrinter.section_header("Estimating Accuracy Using Python Executor")
+            # estimating accuracy using sandbox-fusion executor
+            PrettyPrinter.section_header("Estimating Accuracy Using Sandbox-fusion Executor")
             for valid_uid in valid_uids:
                 df_valid = df[df['uid'] == valid_uid]
                 if df_valid.empty: # the prompt got filtered out TODO: check

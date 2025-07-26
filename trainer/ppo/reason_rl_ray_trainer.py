@@ -402,7 +402,8 @@ class ReasonRLRayPPOTrainer(RayPPOTrainer):
         print(f'Size of val dataloader: {len(self.val_dataloader)}')
 
         # inject total_training_steps to actor/critic optim_config. This is hacky.
-        total_training_steps = len(self.train_dataloader) * self.config.trainer.total_epochs
+        #total_training_steps = len(self.train_dataloader) * self.config.trainer.total_epochs
+        total_training_steps = 32 * self.config.trainer.total_epochs
 
         if self.config.trainer.total_training_steps is not None:
             total_training_steps = self.config.trainer.total_training_steps
