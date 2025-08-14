@@ -207,16 +207,13 @@ class SandboxfusionExecutor:
         if imports:
             code = '\n'.join(imports) + '\n' + code
         code_snippet = EVAL_INPUT_PREDICTION_TEMPLATE_REPR[self.language].format(code=code, gold_output=gold_output, agent_input=agent_input)
-
-        if self.ast_check:
-            try:
-                ast.parse(code_snippet)
-            except:
-                return 0.0
+        print(code_snippet)
         max_retries = 3
         for retry in range(max_retries):
             try:
                 correct, status = self.apply(code_snippet)
+                correct = correct.capitalize()
+                #print(correct, status)
                 return 0.0 if 'error' in status.lower() or not eval(correct) else 1.0
             except Exception as e:
                 if retry == max_retries - 1:
@@ -236,16 +233,12 @@ class SandboxfusionExecutor:
         if imports:
             code = '\n'.join(imports) + '\n' + code
         code_snippet = EVAL_OUTPUT_PREDICTION_TEMPLATE_REPR[self.language].format(code=code, gold_output=gold_output, agent_output=agent_output)
-        if self.ast_check:
-            try:
-                ast.parse(code_snippet)
-            except:
-                return 0.0
+        print(code_snippet)
         max_retries = 3
         for retry in range(max_retries):
             try:
                 correct, status = self.apply(code_snippet)
-                return 0.0 if 'error' in status.lower() or not eval(correct) else 1.0
+                return 0.0 if 'error' in status.lower() or not eval(correct.capitalize()) else 1.0
             except Exception as e:
                 if retry == max_retries - 1:
                     error_details = traceback.format_exc()
@@ -309,11 +302,9 @@ class SandboxfusionExecutor:
     ) -> Tuple[bool, str]:
         if isinstance(imports, np.ndarray):
             imports = imports.tolist()
-        if imports:
-            if self.language == 'cpp':
-                imports = list(set(imports) | {'#include <iostream>'})
+        #if imports:
             #print('imports:', imports)
-            code = '\n'.join(imports) + '\n' + code
+            #code = '\n'.join(imports) + '\n' + code
         if contains_banned_imports(code=code, banned_keywords=banned_keywords, banned_keywords_for_errors_and_exceptions=banned_keywords_for_errors_and_exceptions if check_error else []):
             return False, None
         if check_error:
@@ -341,6 +332,7 @@ class SandboxfusionExecutor:
                 except:
                     return False, 'error'
             """
+            #print(code_snippet)
             output, status = self.apply(code_snippet)
             return not 'error' in status.lower(), output
 
@@ -354,12 +346,12 @@ class SandboxfusionExecutor:
                     run_timeout=self.timeout_length,
                 )
             )
+            #print(response)
             if response.status == RunStatus.Success:
                 # taking [1:-1] to exclude prefix space and suffix newline
-                #print(response.run_result.stdout)
                 return response.run_result.stdout.split('<FINAL_REPR_SYMBOL>')[-1][1:-1], 'done'
             else:
-                #print('Error in response:', response.run_result.stderr)
+                print('Error in response:', response.run_result.stderr)
                 return '', 'error'
 
         except Exception as e:
@@ -376,7 +368,7 @@ def _test(language: str = 'python'):
 def f(a):
     return a
 """,
-"javascript": """function f(a) {
+"nodejs": """function f(a) {
     return a;
 }
 """,

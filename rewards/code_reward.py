@@ -18,7 +18,8 @@ from azr_minor.utils.code_utils.parsers import (
     remove_comments_and_docstrings,
     remove_any_not_definition_imports,
     remove_print_statements,
-    extract_function_from_cpp_string
+    extract_function_from_cpp_string,
+    extract_function_from_js_string
 )
 
 
@@ -83,24 +84,6 @@ def format_python_code(code: str) -> str:
 
 def extract_code(completion: str) -> str:
     pattern = re.compile(r"```python\n(.*?)```", re.DOTALL)
-    matches = pattern.findall(completion)
-    extracted_answer = matches[-1] if len(matches) >= 1 else ""
-    return extracted_answer
-    
-    
-def extract_code2(completion: str, language: str) -> str:
-    if language == 'python':
-        pattern = re.compile(r"```python\n(.*?)```", re.DOTALL)
-    elif language == 'java':
-        pattern = re.compile(r"```java\n(.*?)```", re.DOTALL)
-    elif language == 'javascript':
-        pattern = re.compile(r"```javascript\n(.*?)```", re.DOTALL)
-    elif language == 'cpp':             
-        pattern = re.compile(r"```cpp\n(.*?)```", re.DOTALL)
-    elif language == 'go':
-        pattern = re.compile(r"```go\n(.*?)```", re.DOTALL)     
-    else:
-        raise ValueError(f"Unsupported language: {language}")
     matches = pattern.findall(completion)
     extracted_answer = matches[-1] if len(matches) >= 1 else ""
     return extracted_answer
@@ -405,9 +388,10 @@ def parse_code_input_output(
         )
     """
     imports: List[str] = parse_imports(code_snippet, language)
-    if language in ['cpp', 'java', 'go']:
-        # For C++, Java, and Go, we extract the function definition
+    if language  == 'cpp':
         code_snippet = extract_function_from_cpp_string(code_snippet)
+    elif language == 'nodejs':
+        code_snippet = extract_function_from_js_string(code_snippet)
     """
     # before_remove_comments = code_snippet
     # remove comments and docstrings
@@ -488,7 +472,7 @@ def parse_inputs_message(
     return True, {"inputs": inputs, "message": message}
 
 
-def parse_code_function(input_str: str) -> Tuple[bool, str]:
+def parse_code_function(input_str: str, language: str) -> Tuple[bool, str]:
     """
     Parse the code function from a string.
 
@@ -496,7 +480,7 @@ def parse_code_function(input_str: str) -> Tuple[bool, str]:
         input_str: A string containing the code function
     """
     # Improved regex patterns with better whitespace handling and optional language specifiers
-    code_pattern = r"```(?:python\s*)?\n?(.*?)\n?```"
+    code_pattern = rf"```(?:{language}\s*)?\n?(.*?)\n?```"
     
     flags = re.DOTALL | re.IGNORECASE
     
@@ -509,6 +493,7 @@ def parse_code_function(input_str: str) -> Tuple[bool, str]:
     return True, code_snippet
 
 
+#unused, but kept for reference
 def valid_code(language: str, solution_str: str, executor, banned_words: List[str]) -> Tuple[bool, str]:
     success, result = parse_code_input_output(language, solution_str, parse_output=False)
     if success:

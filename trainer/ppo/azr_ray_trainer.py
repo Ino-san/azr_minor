@@ -46,7 +46,7 @@ seed_program = {
 "java": """int f(int a) {
     return a;
 }""",
-"js": """function f(a) {
+"nodejs": """function f(a) {
     return a;
 }""",
 "cpp": """auto f(auto a) {
@@ -60,16 +60,16 @@ seed_program = {
 imports = {
 "python": [],
 "java": ["import java.util.*;"],
-"js": ["import * as utils from './utils.js';"],
-"cpp": ["#include <iostream>", "#include <string>"],
+"nodejs": ["import * as utils from './utils.js';"],
+"cpp": ["#include <iostream>"],
 "go": ["import (", "    \"fmt\"", "    \"strings\"", ")"]
 }
 
 seed_io = {
-    "python": ['"Hello world"', '1', "dict(a=1, b=2)", '(1.1, 1.2, 1.3)', '"[[1, 0, 0], [0, 0, 0], [0, 0, 0]]"', '1001101100010001'],
+    "python": ['"Hello world"', '1', "dict(a=1, b=2)", '(1.1, 1.2, 1.3)', '[[1, 0, 0], [0, 0, 0], [0, 0, 0]]', '1001101100010001'],
     "java": ['"Hello world"', '1', 'new HashMap<String, Integer>() {{ put("a", 1); put("b", 2); }}', '(1.1, 1.2, 1.3)', '"[[1, 0, 0], [0, 0, 0], [0, 0, 0]]"', '1001101100010001'],
-    "js": ['"Hello world"', '1', '({a: 1, b: 2})', '(1.1, 1.2, 1.3)', '"[[1, 0, 0], [0, 0, 0], [0, 0, 0]]"', '1001101100010001'],
-    "cpp": ['"Hello world"', '1', 'std::vector<int> a = {1, 2, 3};', '(1.1, 1.2, 1.3)', '"[[1, 0, 0], [0, 0, 0], [0, 0, 0]]"', '1001101100010001'],
+    "nodejs": ['"Hello world"', '1', '({a: 1, b: 2})', '(1.1, 1.2, 1.3)', '"[[1, 0, 0], [0, 0, 0], [0, 0, 0]]"', '1001101100010001'],
+    "cpp": ['"Hello world"', '1','std::unordered_map<std::string, int>{{"a", 1}, {"b", 2}}', 'std::tuple<float, float, float>{1.1, 1.2, 1.3}', 'std::vector<std::vector<int>>{{1, 0, 0}, {0, 0, 0}, {0, 0, 0}}', '1001101100010001'],
     "go": ['"Hello world"', '1', 'a := []int{1, 2, 3}', '(1.1, 1.2, 1.3)', '"[[1, 0, 0], [0, 0, 0], [0, 0, 0]]"', '1001101100010001'],
 }
 
@@ -977,7 +977,7 @@ class CodeIORayPPOTrainer(ReasonRLRayPPOTrainer):
                 max_print = min(self.config.azr.random_print_max_programs, len(correct_predictions))
                 for program in random.sample(correct_predictions, max_print):
                     if 'code_f' not in problem_type:
-                        PrettyPrinter.code_block(program['program'], "python")
+                        PrettyPrinter.code_block(program['program'], self.config.azr.language)
                         # also print the problem_type
                         PrettyPrinter.status(f"PROBLEM TYPE", problem_type, "info")
                         PrettyPrinter.status("INPUT", program['input'], "info")
@@ -1108,11 +1108,21 @@ class CodeIORayPPOTrainer(ReasonRLRayPPOTrainer):
                     continue
                 if problem_type != 'code_e' and len(seed_dataset) >= target_size:
                     continue
+                PrettyPrinter.status(
+                    "WORKER", 
+                    f"Start creating {problem_type} dataset", 
+                    "info"
+                )
                 seed_dataloader = self._create_train_code_gen_dataloader(
                     problem_type=problem_type,
                     data_len=self.config.data.train_batch_size,
                     dataset_key='error_seed' if problem_type == 'code_e' else 'seed',
                     seeding=True,
+                )
+                PrettyPrinter.status(
+                    "WORKER", 
+                    f"Start generating {problem_type} problems", 
+                    "info"
                 )
                 for batch_dict in seed_dataloader:
                     batch: DataProto = DataProto.from_single_dict(batch_dict)
@@ -1143,6 +1153,7 @@ class CodeIORayPPOTrainer(ReasonRLRayPPOTrainer):
                     local_entries = []
                     local_error_entries = []
                     for output_text in output_texts:
+                        #print(output_text)
                         success, result = parse_code_input_output(
                             self.config.azr.language,
                             output_text,
@@ -1156,7 +1167,8 @@ class CodeIORayPPOTrainer(ReasonRLRayPPOTrainer):
                             code_location=self.config.azr.reward.generation_reward_config.code_location,
                         )
                         if success:
-                            print(result)
+                            if self.config.azr.language == 'cpp' and '#include <iostream>' not in result['imports']:
+                                result['imports'].append('#include <iostream>')
                             code_validity, output = self._executor.check_all(
                                 code=result['code'],
                                 inputs=result['input'],
@@ -1166,6 +1178,7 @@ class CodeIORayPPOTrainer(ReasonRLRayPPOTrainer):
                                 check_error=problem_type == 'code_e',
                                 banned_keywords_for_errors_and_exceptions=self.config.azr.data_selection_strategy.banned_keywords_for_errors_and_exceptions,
                             )
+                            #print(code_validity, output)
                             if code_validity:
                                 if problem_type == 'code_e':
                                     local_error_entries.append(
@@ -1178,9 +1191,8 @@ class CodeIORayPPOTrainer(ReasonRLRayPPOTrainer):
                                             'composite_functions': []
                                         }
                                     )
-                                else:
-                                    local_entries.append(
-                                        {
+                                else: 
+                                    local_entry = {
                                             'snippet': result['code'],
                                             'input': result['input'],
                                             'output': output,
@@ -1188,9 +1200,10 @@ class CodeIORayPPOTrainer(ReasonRLRayPPOTrainer):
                                             'original_snippet': result['code'],
                                             'composite_functions': []
                                         }
-                                    )
+                                    if local_entry not in local_entries:
+                                        local_entries.append(local_entry)
                         else:
-                            print(result)
+                            #print(result)
                             PrettyPrinter.status(
                                 "DATA", 
                                 f"Failed to parse output: {output_text}", 
@@ -1307,15 +1320,16 @@ class CodeIORayPPOTrainer(ReasonRLRayPPOTrainer):
                                 if not code_validity:
                                     break
                             if code_validity:
-                                epoch_entries.append(
-                                    {
-                                        'snippet': batch.non_tensor_batch['extra_info'][idx]['chosen_references'][0]['snippet'],
-                                        'inputs': result['inputs'],
-                                        'outputs': outputs,
-                                        'message': result['message'],
-                                        'imports': batch.non_tensor_batch['extra_info'][idx]['imports'].tolist(),
-                                    }
-                                )
+                                epoch_entry = {
+                                    'snippet': batch.non_tensor_batch['extra_info'][idx]['chosen_references'][0]['snippet'],
+                                    'inputs': result['inputs'],
+                                    'outputs': outputs,
+                                    'message': result['message'],
+                                    'imports': batch.non_tensor_batch['extra_info'][idx]['imports'].tolist(),
+                                }
+                                if epoch_entry not in epoch_entries:
+                                    # Avoid duplicates in the epoch entries
+                                    epoch_entries.append(epoch_entry)
 
                 # Then send to ray
                 processed_entries = process_elements(epoch_entries)
@@ -1429,7 +1443,7 @@ class CodeIORayPPOTrainer(ReasonRLRayPPOTrainer):
             PrettyPrinter.section_header("Sample Entries")
             # sample 3 entries
             for i, item in enumerate(random.sample(seed_dataset, self.config.azr.random_print_max_programs)):  
-                PrettyPrinter.code_block(item['snippet'], "python")
+                PrettyPrinter.code_block(item['snippet'], self.config.azr.language)
                 PrettyPrinter.status("INPUT", item['input'], "info")
                 PrettyPrinter.status("OUTPUT", item['output'], "info")
                 if i < 2:  # Don't print separator after last item
@@ -1451,7 +1465,7 @@ class CodeIORayPPOTrainer(ReasonRLRayPPOTrainer):
             PrettyPrinter.section_header("Error Sample Entries")
             # sample 3 entries
             for i, item in enumerate(random.sample(error_dataset, self.config.azr.random_print_max_programs)):  
-                PrettyPrinter.code_block(item['snippet'], "python")
+                PrettyPrinter.code_block(item['snippet'], self.config.azr.language)
                 PrettyPrinter.status("INPUT", item['input'], "info")
                 PrettyPrinter.status("OUTPUT", item['output'], "info")
                 if i < 2:  # Don't print separator after last item
@@ -1474,7 +1488,7 @@ class CodeIORayPPOTrainer(ReasonRLRayPPOTrainer):
             PrettyPrinter.section_header("Code F Sample Entries")
             # sample 3 entries
             for i, item in enumerate(random.sample(code_f_dataset, self.config.azr.random_print_max_programs)):  
-                PrettyPrinter.code_block(item['snippet'], "python")
+                PrettyPrinter.code_block(item['snippet'], self.config.azr.language)
                 PrettyPrinter.status("INPUTS", item['inputs'], "info")
                 PrettyPrinter.status("OUTPUTS", item['outputs'], "info")
                 PrettyPrinter.status("MESSAGE", item['message'], "info")

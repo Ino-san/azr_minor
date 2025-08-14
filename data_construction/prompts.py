@@ -3,7 +3,7 @@ from typing import List, Dict, Tuple
 language_name = {
     "python": "Python", 
     "java": "Java", 
-    "js": "JavaScript", 
+    "nodejs": "JavaScript", 
     "cpp": "C++", 
     "go": "Go"
     }
@@ -22,8 +22,8 @@ int f(...) {
     return ...;
 }
 ```""",
-"js": """
-```javascript
+"nodejs": """
+```nodejs
 function f(...) {
     // your code here 
     return ...;
@@ -31,7 +31,7 @@ function f(...) {
 ```""",
 "cpp": """
 ```cpp
-int f(...) {
+std::string f(...) {
     // your code here
     return ...;
 }
@@ -59,8 +59,8 @@ int f(name: String, info: Map<String, Integer>) {
     return result;
 }
 ```""",
-"js": """
-```javascript
+"nodejs": """
+```nodejs
 function f(name, info) {
     // code logic here
     return result;
@@ -68,9 +68,9 @@ function f(name, info) {
 ```""",
 "cpp": """
 ```cpp
-int f(std::string name, int age) {
+int f(std::string name, int age, std::string city) {
     // code logic here
-    return result;
+    return z;
 }
 ```""",
 "go": """
@@ -85,7 +85,7 @@ func f(name string, age int) int {
 func_header = {
 "python": "def f(...):",
 "java": "int f(...):",
-"js": "function f(...) {",
+"nodejs": "function f(...) {",
 "cpp": "int f(...) {",
 "go": "func f(...) ..."
 }
@@ -100,13 +100,13 @@ int f(int a) {
     return a;  
 }
 """,
-"js": """
+"nodejs": """
 function f(a) {
     return a;
 }
 """,          
 "cpp": """
-int f(int a) {
+auto f(auto a) {
     return a;
 }
 """,    
@@ -120,16 +120,16 @@ func f(a int) int {
 dict_example = {
 "python": "{'age': 20, 'city': 'New York'}",
 "java": "Map<String, Integer> info = new HashMap<>(); info.put(\"age\", 20); info.put(\"city\", \"New York\");",
-"js": "{age: 20, city: 'New York'}",
-"cpp": "std::map<std::string, int> info; info[\"age\"] = 20; info[\"city\"] = \"New York\";",
+"nodejs": "{\"age\": 20, \"city\": \"New York\"}",
+"cpp": "20, \"New York\"",
 "go": "info := map[string]int{\"age\": 20, \"city\": \"New York\"}"
 }
 
 dict_example2 = {
 "python": "{'age': 37, 'city': 'Los Angeles'}",
 "java": "Map<String, Integer> info = new HashMap<>(); info.put(\"age\", 37); info.put(\"city\", \"Los Angeles\");",
-"js": "{age: 37, city: 'Los Angeles'}",
-"cpp": "std::map<std::string, int> info; info[\"age\"] = 37; info[\"city\"] = \"Los Angeles\";",
+"nodejs": "{\"age\": 37, \"city\": \"Los Angeles\"}",
+"cpp": "37, \"Los Angeles\"",
 "go": "info := map[string]int{\"age\": 37, \"city\": \"Los Angeles\"}"
 }
 
@@ -143,14 +143,13 @@ Using the reference code snippets provided below as examples, design a new and u
 - Ensure the function returns a value
 - Include at least one input parameter
 - Make the function deterministic
+- Function `main` should do nothing
 - Make the snippet require state tracking across multiple data transformations, ensuring the task requires long multi step reasoning
 - AVOID THE FOLLOWING:
   * Random functions or variables
   * Date/time operations
   * I/O operations (reading files, network requests)
   * Printing or logging
-  * Class definitions
-  * Custom types
   * Any external state
 - Ensure execution completes within 10 seconds on a modern CPU
 - All imports and class definitions should be at the very top of the code snippet
@@ -172,7 +171,7 @@ arg1, arg2, ...
 {example_code_format}
 
 ```input
-'John', {dict_example}
+"John", {dict_example}
 ```
 
 ### Evaluation Criteria:
@@ -196,6 +195,7 @@ Using the reference code snippets provided below as examples, design a new and u
 - Ensure the function returns a value
 - Include at least one input parameter
 - Make the function deterministic
+- Function `main` should do nothing
 - Make the snippet require state tracking across multiple data transformations, ensuring the task requires long multi step reasoning
 - AVOID THE FOLLOWING:
   * Random functions or variables
@@ -223,7 +223,7 @@ arg1, arg2, ...
 {example_code_format}
 
 ```input
-'John', {dict_example}
+"John", {dict_example}
 ```
 
 ### Evaluation Criteria:
@@ -313,10 +313,9 @@ arg1, arg2, ...
 
 ### Example Format:
 ```input
-'John', {dict_example}
-```
+"John", {dict_example}
 ```input
-'Sammy', {dict_example2}
+"Sammy", {dict_example2}
 ```
 
 ### Evaluation Criteria:

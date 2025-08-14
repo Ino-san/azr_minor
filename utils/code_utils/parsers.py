@@ -4,7 +4,7 @@ from typing import List
 
 import_string = {
     "python": "from|import",
-    "js": "import",
+    "nodejs": "import",
     "java": "import",
     "cpp": "#include",
     "go": "import",
@@ -207,7 +207,6 @@ def extract_function_from_cpp_string(cpp_code_content: str) -> str:
     extracted_lines = []
     in_function = False
     brace_level = 0
-    function_signature_line_buffer = []
 
     # 関数のシグネチャを検出するための正規表現
     function_start_pattern = re.compile(r'\b' + "f" + r'\s*\(')
@@ -216,42 +215,18 @@ def extract_function_from_cpp_string(cpp_code_content: str) -> str:
     lines = cpp_code_content.splitlines(keepends=True) # keepends=Trueで改行文字を保持
 
     for line in lines:
+        extracted_lines.append(line)
         stripped_line = line.strip()
-
         if not in_function:
             # まだ関数定義に入っていない場合
             if function_start_pattern.search(stripped_line):
-                # 関数シグネチャの開始を検出
-                function_signature_line_buffer = [line]
-                
                 current_line_open_braces = stripped_line.count('{')
                 current_line_close_braces = stripped_line.count('}')
                 brace_level += current_line_open_braces
                 brace_level -= current_line_close_braces
-
-                if brace_level > 0: # もしこの行でブレースが開いていれば、関数本体に入ったとみなす
-                    extracted_lines.extend(function_signature_line_buffer)
-                    in_function = True
-                    function_signature_line_buffer = []
-            elif function_signature_line_buffer:
-                # シグネチャが複数行にわたる可能性があるため、バッファリングを続ける
-                function_signature_line_buffer.append(line)
-                
-                current_line_open_braces = stripped_line.count('{')
-                current_line_close_braces = stripped_line.count('}')
-                brace_level += current_line_open_braces
-                brace_level -= current_line_close_braces
-
-                if brace_level > 0: # 最初の '{' が見つかった場合
-                    extracted_lines.extend(function_signature_line_buffer)
-                    in_function = True
-                    function_signature_line_buffer = []
-                elif brace_level < 0: # シグネチャ行に閉じブレースがあったが開きブレースがなかった場合（エラーケース）
-                    function_signature_line_buffer = []
-                    brace_level = 0 # リセット
+                in_function = True
         else:
             # 関数本体内にある場合
-            extracted_lines.append(line)
             brace_level += stripped_line.count('{')
             brace_level -= stripped_line.count('}')
 
@@ -266,51 +241,26 @@ def extract_function_from_js_string(js_code_content: str) -> str:
     extracted_lines = []
     in_function = False
     brace_level = 0
-    function_signature_line_buffer = []
 
     # 関数のシグネチャを検出するための正規表現
-    function_start_pattern = re.compile(r'\b' + "f" + r'\s*\(')
+    function_start_pattern = re.compile(r'function f' + r'\s*\(')
 
     # 文字列を改行で分割して行リストにする
-    lines = cpp_code_content.splitlines(keepends=True) # keepends=Trueで改行文字を保持
+    lines = js_code_content.splitlines(keepends=True) # keepends=Trueで改行文字を保持
 
     for line in lines:
+        extracted_lines.append(line)
         stripped_line = line.strip()
-
         if not in_function:
             # まだ関数定義に入っていない場合
             if function_start_pattern.search(stripped_line):
-                # 関数シグネチャの開始を検出
-                function_signature_line_buffer = [line]
-                
                 current_line_open_braces = stripped_line.count('{')
                 current_line_close_braces = stripped_line.count('}')
                 brace_level += current_line_open_braces
                 brace_level -= current_line_close_braces
-
-                if brace_level > 0: # もしこの行でブレースが開いていれば、関数本体に入ったとみなす
-                    extracted_lines.extend(function_signature_line_buffer)
-                    in_function = True
-                    function_signature_line_buffer = []
-            elif function_signature_line_buffer:
-                # シグネチャが複数行にわたる可能性があるため、バッファリングを続ける
-                function_signature_line_buffer.append(line)
-                
-                current_line_open_braces = stripped_line.count('{')
-                current_line_close_braces = stripped_line.count('}')
-                brace_level += current_line_open_braces
-                brace_level -= current_line_close_braces
-
-                if brace_level > 0: # 最初の '{' が見つかった場合
-                    extracted_lines.extend(function_signature_line_buffer)
-                    in_function = True
-                    function_signature_line_buffer = []
-                elif brace_level < 0: # シグネチャ行に閉じブレースがあったが開きブレースがなかった場合（エラーケース）
-                    function_signature_line_buffer = []
-                    brace_level = 0 # リセット
+                in_function = True
         else:
             # 関数本体内にある場合
-            extracted_lines.append(line)
             brace_level += stripped_line.count('{')
             brace_level -= stripped_line.count('}')
 

@@ -221,6 +221,7 @@ class CodeIORewardManager():
                     composite_functions = [d['snippet'] for d in data_dict['composite_functions']],
                 )
             if success:
+                print(result['code'])
                 code_validity, output = executor.check_all(
                     code=result['code'],
                     inputs=result['input'],
@@ -316,7 +317,7 @@ class CodeIORewardManager():
                 data_dict['answer'] = output_snippet
                 return data_dict
             elif problem_type.endswith('code_f'):
-                success, code_snippet = parse_code_function(extracted_content)
+                success, code_snippet = parse_code_function(extracted_content, self.language)
                 if not success:
                     data_dict['format_score'] = 0.
                     return data_dict
@@ -393,6 +394,7 @@ class CodeIORewardManager():
                 valid_response_length = data_dicts[i]['valid_response_length']
                 acc_reward = rewards[uid]['accuracy']
                 format_reward = data_dicts[i]['format_score']
+                #print(format_reward, acc_reward)
                 if format_reward > 0:
                     if acc_reward > 0:
                         # Helper function for safe reward combination
@@ -435,6 +437,7 @@ class CodeIORewardManager():
                         """
 
                         final_reward = _combine_rewards(acc_reward, intrinsic_reward_components, self.generation_reward_config.intrinsic_combine_method)
+                        #print('final_reward:', final_reward)
                         reward_tensor[i, valid_response_length - 1] = final_reward
                     else:
                         reward_tensor[i, valid_response_length - 1] = -0.5
@@ -469,6 +472,9 @@ class CodeIORewardManager():
                 if not data_dicts[i]['format_score']: # early stop if the format is not correct
                     acc_reward = 0.
                 elif problem_types[i].endswith('code_i'):
+                    #print('code:', program)
+                    #print('input:', answer)
+                    #print('output:', gold_output)
                     acc_reward = executor.eval_input_prediction(code=program, gold_output=gold_output, agent_input=answer, imports=list(set(imports)))
                     # problematic, but we did not encounter too much of this
                     if acc_reward is None:
@@ -740,7 +746,7 @@ class CodeIORewardManager():
                         return_output=(problem_type.endswith('code_o') or problem_type.endswith('code_e')) # code_e output format is same as code_o
                     ) for answer in df_valid['extracted_answers'].tolist()]
                 else:
-                    answers = [parse_code_function(answer) for answer in df_valid['extracted_answers'].tolist()]
+                    answers = [parse_code_function(answer, self.language) for answer in df_valid['extracted_answers'].tolist()]
                 answer_cache = {} # for the same uid, the answer is the same and the program is assumed to be deterministic, therefore we cache the answer -> accuracy mapping
                 if pt == 'code_f':
                     hidden_outputs = df_valid['hidden_outputs'].tolist()[0].tolist()
@@ -759,7 +765,11 @@ class CodeIORewardManager():
                             if answer in answer_cache:
                                 problem_accuracies.append(answer_cache[answer])
                                 continue
+                            #print('code:', program)
+                            #print('input:', answer)
+                            #print('output:', gold_output)
                             acc_reward = executor.eval_input_prediction(code=program, gold_output=gold_output, agent_input=answer, imports=list(set(imports)))
+                            #print('reward:' , acc_reward)
                             if acc_reward is not None:
                                 problem_accuracies.append(acc_reward)
                             answer_cache[answer] = acc_reward
@@ -805,6 +815,7 @@ class CodeIORewardManager():
                             problem_accuracies.append(answer_acc)
                         else:
                             raise ValueError(f"Invalid code_f_reward_type: {self.code_f_reward_type}")
+                #print(problem_type, sum(problem_accuracies) / len(problem_accuracies))
                 accuracies[valid_uid] = sum(problem_accuracies) / len(problem_accuracies) if problem_accuracies else 0.0
 
                 # filtering valid programs
@@ -845,7 +856,8 @@ class CodeIORewardManager():
             for data_dict in data_dicts:
                 rewards[data_dict['uid']]['complexity'] = get_code_complexity_reward(data_dict['answer'][code_key]) if 'answer' in data_dict else 0.0
             for data_dict in data_dicts:
-                rewards[data_dict['uid']]['mean_edit_distance'] = np.mean([ast_edit_distance(data_dict['answer'][code_key], ref) for ref in data_dict[reference_key]]) if 'answer' in data_dict else 0.0
+                #rewards[data_dict['uid']]['mean_edit_distance'] = np.mean([ast_edit_distance(data_dict['answer'][code_key], ref) for ref in data_dict[reference_key]]) if 'answer' in data_dict else 0.0
+                rewards[data_dict['uid']]['mean_edit_distance'] = 0.0
             for data_dict in data_dicts:
                 rewards[data_dict['uid']]['halstead'] = get_halstead_reward(data_dict['answer'][code_key]) if 'answer' in data_dict else 0.0
             for data_dict in data_dicts:

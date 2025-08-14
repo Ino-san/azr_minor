@@ -36,7 +36,7 @@ python -m absolute_zero_reasoner.main_azr_ppo \
     actor_rollout_ref.actor.fsdp_config.optimizer_offload=False \
     actor_rollout_ref.ref.log_prob_micro_batch_size_per_gpu=64 \
     actor_rollout_ref.rollout.log_prob_micro_batch_size_per_gpu=64 \
-    actor_rollout_ref.rollout.tensor_model_parallel_size=2 \
+    actor_rollout_ref.rollout.tensor_model_parallel_size=4 \
     actor_rollout_ref.rollout.name=vllm \
     actor_rollout_ref.rollout.max_num_batched_tokens=16384 \
     actor_rollout_ref.rollout.gpu_memory_utilization=0.4 \
@@ -52,7 +52,7 @@ python -m absolute_zero_reasoner.main_azr_ppo \
     trainer.experiment_name='azr_coder7b' \
     trainer.n_gpus_per_node=4 \
     trainer.nnodes=1 \
-    trainer.save_freq=10 \
+    trainer.save_freq=64 \
     trainer.remove_previous_ckpt_in_save=True \
     trainer.del_local_ckpt_after_load=True \
     trainer.test_freq=10 \
