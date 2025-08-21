@@ -207,7 +207,7 @@ class SandboxfusionExecutor:
         if imports:
             code = '\n'.join(imports) + '\n' + code
         code_snippet = EVAL_INPUT_PREDICTION_TEMPLATE_REPR[self.language].format(code=code, gold_output=gold_output, agent_input=agent_input)
-        print(code_snippet)
+        #print(code_snippet)
         max_retries = 3
         for retry in range(max_retries):
             try:
@@ -233,7 +233,7 @@ class SandboxfusionExecutor:
         if imports:
             code = '\n'.join(imports) + '\n' + code
         code_snippet = EVAL_OUTPUT_PREDICTION_TEMPLATE_REPR[self.language].format(code=code, gold_output=gold_output, agent_output=agent_output)
-        print(code_snippet)
+        #print(code_snippet)
         max_retries = 3
         for retry in range(max_retries):
             try:
@@ -351,7 +351,7 @@ class SandboxfusionExecutor:
                 # taking [1:-1] to exclude prefix space and suffix newline
                 return response.run_result.stdout.split('<FINAL_REPR_SYMBOL>')[-1][1:-1], 'done'
             else:
-                print('Error in response:', response.run_result.stderr)
+                #print('Error in response:', response.run_result.stderr)
                 return '', 'error'
 
         except Exception as e:

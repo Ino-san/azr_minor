@@ -221,7 +221,7 @@ class CodeIORewardManager():
                     composite_functions = [d['snippet'] for d in data_dict['composite_functions']],
                 )
             if success:
-                print(result['code'])
+                #print(result['code'])
                 code_validity, output = executor.check_all(
                     code=result['code'],
                     inputs=result['input'],

@@ -1,0 +1,54 @@
+set -x
+
+export WORLD_SIZE=4
+export VLLM_ATTENTION_BACKEND=FLASH_ATTN
+export RAY_memory_monitor_refresh_ms=0
+export RAY_LOGGING_LEVEL=DEBUG
+export HYDRA_FULL_ERROR=1
+export PYTHONPATH="${PYTHONPATH}:$(pwd)/verl"
+
+python -m azr_minor.evaluation.src.solve \
+    azr.language=nodejs \
+    data.train_batch_size=64 \
+    data.val_batch_size=1312 \
+    data.max_prompt_length=6144 \
+    data.max_response_length=8096 \
+    +data.load_checkpoint=False \
+    +data.checkpoint_path=checkpoints/code_io/azr_minor_js/azr_coder_3b/js_test_answer/Qwen2.5-Coder-3B/answer_conditional/global_step_480/actor \
+    +data.test_file=humaneval-X/javascript.jsonl \
+    actor_rollout_ref.ref.include_ref=False \
+    actor_rollout_ref.model.path=Qwen/Qwen2.5-Coder-3B \
+    actor_rollout_ref.actor.optim.lr=1e-6 \
+    actor_rollout_ref.model.use_remove_padding=True \
+    actor_rollout_ref.actor.ppo_mini_batch_size=128 \
+    actor_rollout_ref.actor.ppo_micro_batch_size_per_gpu=16 \
+    actor_rollout_ref.actor.use_kl_loss=False \
+    actor_rollout_ref.actor.kl_loss_coef=0.0 \
+    actor_rollout_ref.actor.kl_loss_type=low_var_kl \
+    actor_rollout_ref.actor.ulysses_sequence_parallel_size=4 \
+    actor_rollout_ref.model.enable_gradient_checkpointing=True \
+    actor_rollout_ref.model.pretrained_tokenizer=True \
+    actor_rollout_ref.actor.fsdp_config.param_offload=False \
+    actor_rollout_ref.actor.fsdp_config.optimizer_offload=False \
+    actor_rollout_ref.ref.log_prob_micro_batch_size_per_gpu=64 \
+    actor_rollout_ref.rollout.log_prob_micro_batch_size_per_gpu=64 \
+    actor_rollout_ref.rollout.tensor_model_parallel_size=2 \
+    actor_rollout_ref.rollout.name=vllm \
+    actor_rollout_ref.rollout.max_num_batched_tokens=16384 \
+    actor_rollout_ref.rollout.gpu_memory_utilization=0.4 \
+    actor_rollout_ref.rollout.enforce_eager=False \
+    actor_rollout_ref.rollout.free_cache_engine=False \
+    actor_rollout_ref.rollout.n=1 \
+    actor_rollout_ref.rollout.temperature=0.0 \
+    actor_rollout_ref.ref.fsdp_config.param_offload=True \
+    trainer.critic_warmup=0 \
+    trainer.logger=['console','wandb'] \
+    trainer.project_name='azr_minor_js' \
+    trainer.experiment_name='azr_coder_3b' \
+    trainer.n_gpus_per_node=4 \
+    trainer.nnodes=1 \
+    trainer.save_freq=64 \
+    trainer.remove_previous_ckpt_in_save=True \
+    trainer.del_local_ckpt_after_load=True \
+    trainer.test_freq=4 \
+    +trainer.val_before_train=False \

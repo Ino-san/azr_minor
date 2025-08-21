@@ -49,7 +49,7 @@ python -m azr_minor.main_azr_minor_ppo \
     algorithm.kl_ctrl.kl_coef=0.0 \
     trainer.critic_warmup=0 \
     trainer.logger=['console','wandb'] \
-    trainer.project_name='azr_minor_js' \
+    trainer.project_name='azr_minor_js_1' \
     trainer.experiment_name='azr_coder_3b' \
     trainer.n_gpus_per_node=4 \
     trainer.nnodes=1 \
@@ -106,4 +106,4 @@ python -m azr_minor.main_azr_minor_ppo \
     azr.data_selection_strategy.composite_function_n_max=0 \
     azr.reward.code_f_reward_type=binary \
     trainer.wandb_run_id=null \
-    trainer.total_epochs=15 $@
+    trainer.total_epochs=20 $@
