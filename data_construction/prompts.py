@@ -5,7 +5,8 @@ language_name = {
     "java": "Java", 
     "nodejs": "JavaScript", 
     "cpp": "C++", 
-    "go": "Go"
+    "go": "Go",
+    "julia": "Julia"
     }
 
 code_format = {
@@ -42,6 +43,13 @@ func f(...) ... {
     // your code here
     return ...;
 }
+```""",
+"julia": """
+```julia
+function f(...) 
+    # your code here
+    return ...
+end
 ```"""
 }
 
@@ -79,6 +87,13 @@ func f(name string, age int) int {
     // code logic here
     return result;
 }
+```""",
+"julia": """
+```julia
+function f(name, info)
+    # code logic here
+    return result
+end
 ```"""
 }
 
@@ -87,7 +102,8 @@ func_header = {
 "java": "int f(...):",
 "nodejs": "function f(...) {",
 "cpp": "int f(...) {",
-"go": "func f(...) ..."
+"go": "func f(...) ... {",
+"julia": "function f(...)"
 }
 
 seed_func = {
@@ -114,6 +130,11 @@ auto f(auto a) {
 func f(a int) int {
     return a
 }
+""",
+"julia": """
+function f(a)
+    return a
+end
 """
 }
 
@@ -122,7 +143,8 @@ dict_example = {
 "java": "Map<String, Integer> info = new HashMap<>(); info.put(\"age\", 20); info.put(\"city\", \"New York\");",
 "nodejs": "{\"age\": 20, \"city\": \"New York\"}",
 "cpp": "20, \"New York\"",
-"go": "info := map[string]int{\"age\": 20, \"city\": \"New York\"}"
+"go": "info := map[string]int{\"age\": 20, \"city\": \"New York\"}",
+"julia": "Dict(\"age\" => 20, \"city\" => \"New York\")"
 }
 
 dict_example2 = {
@@ -130,11 +152,12 @@ dict_example2 = {
 "java": "Map<String, Integer> info = new HashMap<>(); info.put(\"age\", 37); info.put(\"city\", \"Los Angeles\");",
 "nodejs": "{\"age\": 37, \"city\": \"Los Angeles\"}",
 "cpp": "37, \"Los Angeles\"",
-"go": "info := map[string]int{\"age\": 37, \"city\": \"Los Angeles\"}"
+"go": "info := map[string]int{\"age\": 37, \"city\": \"Los Angeles\"}",
+"julia": "Dict(\"age\" => 37, \"city\" => \"Los Angeles\")"
 }
 
 code_input_prompt = """
-## Task: Create a {Language} Code Snippet (where custom classes are allowed, which should be defined at the top of the code snippet) with one Matching Input
+## Task: Create a {Language} Code Snippet (where custom modules are allowed, which should be defined at the top of the code snippet) with one Matching Input
 
 Using the reference code snippets provided below as examples, design a new and unique {Language} code snippet that demands deep algorithmic reasoning to deduce one possible input from a given output. Your submission should include both a code snippet and test input pair, where the input will be plugged into the code snippet to produce the output, which that function output be given to a test subject to come up with any input that will produce the same function output. This is meant to be an I.Q. test.
 
@@ -152,7 +175,7 @@ Using the reference code snippets provided below as examples, design a new and u
   * Printing or logging
   * Any external state
 - Ensure execution completes within 10 seconds on a modern CPU
-- All imports and class definitions should be at the very top of the code snippet
+- All imports and module definitions should be at the very top of the code snippet
 - The snippet should end with a return statement from the main function `f`, anything after will be removed
 {remove_input_from_snippet_prompt}{remove_after_return_prompt}
 ### Input Requirements:
@@ -176,7 +199,7 @@ arg1, arg2, ...
 
 ### Evaluation Criteria:
 - Executability, your code should be executable given your input
-- Difficulty in predicting the output from your provided input and code snippet. Focus on either algorithmic reasoning or logic complexity. For example, you can define complex data structure classes and operate on them like trees, heaps, stacks, queues, graphs, etc, or use complex control flow, dynamic programming, recursions, divide and conquer, greedy, backtracking, etc
+- Difficulty in predicting the output from your provided input and code snippet. Focus on either algorithmic reasoning or logic complexity. For example, you can define complex data structure modules and operate on them like trees, heaps, stacks, queues, graphs, etc, or use complex control flow, dynamic programming, recursions, divide and conquer, greedy, backtracking, etc
 - Creativity, the code needs to be sufficiently different from the provided reference snippets
 - Restricted usage of certain keywords and packages, you are not allowed to use the following words in any form, even in comments: <|BANNED_KEYWORDS|>
 
@@ -186,7 +209,7 @@ First, carefully devise a clear plan: e.g., identify how your snippet will be ch
 """
 
 code_output_prompt = """
-## Task: Create a New {Language} Code Snippet (where custom classes are allowed, which should be defined at the top of the code snippet) with one Matching Input
+## Task: Create a New {Language} Code Snippet (where custom modules are allowed, which should be defined at the top of the code snippet) with one Matching Input
 
 Using the reference code snippets provided below as examples, design a new and unique {Language} code snippet that demands deep algorithmic reasoning to deduce the output from the input. Your submission should include a code snippet and a test input pair, where the input will be plugged into the code snippet to produce the output. The input will be given to a test subject to deduce the output, which is meant to be an I.Q. test.
 
@@ -204,7 +227,7 @@ Using the reference code snippets provided below as examples, design a new and u
   * Printing or logging
   * Any external state
 - Ensure execution completes within 10 seconds on a modern CPU
-- All imports and class definitions should be at the very top of the code snippet
+- All imports and module definitions should be at the very top of the code snippet
 - The snippet should end with a return statement from the main function `f`, anything after will be removed
 {remove_input_from_snippet_prompt}{remove_after_return_prompt}
 ### Input Requirements:
@@ -228,7 +251,7 @@ arg1, arg2, ...
 
 ### Evaluation Criteria:
 - Executability, your code should be executable given your input
-- Difficulty in predicting your ```input``` from 1) your ```{language}``` code and 2) the deterministic ```output``` that will be obtained from your ```input```. Focus on either algorithmic reasoning or logic complexity. For example, you can define complex data structure classes and operate on them like trees, heaps, stacks, queues, graphs, etc, or use complex control flow, dynamic programming, recursions, divide and conquer, greedy, backtracking, etc
+- Difficulty in predicting your ```input``` from 1) your ```{language}``` code and 2) the deterministic ```output``` that will be obtained from your ```input```. Focus on either algorithmic reasoning or logic complexity. For example, you can define complex data structure modules and operate on them like trees, heaps, stacks, queues, graphs, etc, or use complex control flow, dynamic programming, recursions, divide and conquer, greedy, backtracking, etc
 - Creativity, the code needs to be sufficiently different from the provided reference snippets
 - Restricted usage of certain keywords and packages, you are not allowed to use the following words in any form, even in comments: <|BANNED_KEYWORDS|>
 
@@ -238,7 +261,7 @@ First, carefully devise a clear plan: e.g., identify how your snippet will be ch
 """
 
 code_error_prompt = """
-## Task: Create a New {Language} Code Snippet (where custom classes are allowed, which should be defined at the top of the code snippet) with one Matching Input
+## Task: Create a New {Language} Code Snippet (where custom modules are allowed, which should be defined at the top of the code snippet) with one Matching Input
 
 Using the reference code snippets provided below as examples, design a new and unique {Language} code snippet that demands deep algorithmic reasoning to deduce what type of error will be raised when the code is executed. Your submission should include a code snippet and a test input pair, where the input will be plugged into the code snippet to produce the error. You can also choose to include a custom error type in your code snippet. However, the code can also be designed to raise no error. The input and the code will be given to a test subject to deduce the error type, which is meant to be an I.Q. test.
 
@@ -255,7 +278,7 @@ Using the reference code snippets provided below as examples, design a new and u
   * Printing or logging
   * Any external state
 - Ensure execution completes within 10 seconds on a modern CPU
-- All imports and class definitions should be at the very top of the code snippet
+- All imports and module definitions should be at the very top of the code snippet
 - The snippet should end with a return statement from the main function `f`, anything after will be removed
 {remove_after_return_prompt}
 ### Input Requirements:
@@ -279,7 +302,7 @@ arg1, arg2, ...
 
 ### Evaluation Criteria:
 - Executability, your code should be executable given your input
-- Difficulty in deducing the error type (or no error) from 1) your ```{language}``` code and ```input```. Focus on either algorithmic reasoning or logic complexity. For example, you can define complex data structure classes and operate on them like trees, heaps, stacks, queues, graphs, etc, or use complex control flow, dynamic programming, recursions, divide and conquer, greedy, backtracking, etc
+- Difficulty in deducing the error type (or no error) from 1) your ```{language}``` code and ```input```. Focus on either algorithmic reasoning or logic complexity. For example, you can define complex data structure modules and operate on them like trees, heaps, stacks, queues, graphs, etc, or use complex control flow, dynamic programming, recursions, divide and conquer, greedy, backtracking, etc
 - Creativity, the code needs to be sufficiently different from the provided reference snippets
 - Restricted usage of certain keywords and packages, you are not allowed to use the following words in any form, even in comments: <|BANNED_KEYWORDS|>
 <|BANNED_ASSERTION_KEYWORDS|>
@@ -351,7 +374,7 @@ arg1, arg2, ...
 ```
 # Example Output:
 ```input
-'John', {dict_example}
+"John", {dict_example}
 ```
 """
 
@@ -413,7 +436,7 @@ Given a set of input/output pairs and a message that describes the function, thi
   * Printing or logging
   * Any external state
 - Ensure execution completes within 10 seconds on a modern CPU
-- All imports and class definitions should be at the very top of the code snippet
+- All imports and module definitions should be at the very top of the code snippet
 - The snippet should end with a return statement from the main function `f()`, anything after will be removed
 
 # Input and Output Pairs:

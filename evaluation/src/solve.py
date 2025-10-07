@@ -3,6 +3,7 @@ import json
 from omegaconf import OmegaConf
 import ray
 from torch.utils.data import DataLoader, SequentialSampler
+from pathlib import Path
 
 from verl.workers.fsdp_workers import ActorRolloutRefWorker
 from verl.protocol import DataProto
@@ -17,16 +18,56 @@ from verl.single_controller.ray.base import create_colocated_worker_cls
 from azr_minor.rewards.custom_evaluate import extract_code
 from azr_minor.utils.code_utils.sandboxfusion_executor import SandboxfusionExecutor
 
+Language = {
+    "python": "Python",
+    "nodejs": "Javascript",
+    "cpp": "C++",
+    "java": "Java",
+    "go": "Go",
+    "julia": "Julia"
+}
+
+instruction_prefix = {
+    "instruct": "Please provide a self-contained {Language} script that solves the following problem in a markdown code block:",
+    "perf-instruct": "Please provide an efficient and self-contained {Language} script that solves the following problem in a markdown code block:",
+    "perf-CoT": "Think step by step: please provide an efficient and self-contained {Language} script that solves the following problem in a markdown code block:",
+    "azr": "A conversation between User and Assistant. The user asks a question, and the Assistant solves it. The assistant first thinks about the reasoning process in the mind and then provides the user with the answer. The reasoning process and answer are enclosed within <think> </think> and <answer> </answer> tags, respectively, i.e., <think> reasoning process here </think> <answer> answer here </answer>. User: Please provide an efficient and self-contained {Language} script that solves the following problem in a markdown code block:"
+}
+
+response_prefix = {
+    "instruct": "Below is a {Language} script with a self-contained function that solves the problem and passes corresponding tests:",
+    "perf-instruct": "Below is a {Language} script with a self-contained function that efficiently solves the problem and passes corresponding tests:",
+    "perf-CoT": "Below is a {Language} script with a self-contained function that efficiently solves the problem and passes corresponding tests:",
+    "azr": "Assistant: <think>"
+}
+
 _MAGIC_SPLITTER_ = "-[[]]-this-is-really-our-highest-priority-[[]]-"
+
+
+task_prompt = """\
+{instruction_prefix}
+```
+{prompt}
+```
+"""
+response = """\
+{response_prefix}
+```{language}
+{_MAGIC_SPLITTER_}
+```
+"""
+
 
 @hydra.main(config_path='../../configs', config_name='azr_minor_ppo_trainer', version_base=None)
 def main(config):
     solve(config)
     
 def solve(config):
+    config.actor_rollout_ref.actor.optim = None
     ray.init(
         runtime_env={"env_vars": {"TOKENIZERS_PARALLELISM": "true", "NCCL_DEBUG": "WARN", "VLLM_LOGGING_LEVEL": "WARN", "VLLM_ALLOW_RUNTIME_LORA_UPDATING": "true"}},
         num_cpus=config.ray_init.num_cpus,
+        _temp_dir='/tmp/ray/inoue'
     )
     
     trust_remote_code = config.data.get("trust_remote_code", False)
@@ -68,8 +109,9 @@ def solve(config):
     rollout = all_wg['actor_rollout']
     rollout.init_model()
     if config.data.load_checkpoint:
-        rollout.load_checkpoint(config.data.checkpoint_path)
-    
+        checkpoint_path = (Path(config.trainer.default_local_dir) / config.data.train_files.split('/')[-1].split('.')[0] / config.actor_rollout_ref.model.path.split('/')[-1] / config.reward_fn.extraction_type / f"global_step_{config.data.checkpoint_global_step}" / "actor").as_posix()
+        rollout.load_checkpoint(checkpoint_path)
+
     executor = SandboxfusionExecutor(
         language = config.azr.language,
         use_china_mirror = False
@@ -79,26 +121,18 @@ def solve(config):
     with open(test_path, 'r') as f:
         test_data = [json.loads(line) for line in f]
     
-    task_prompt = """\
-A conversation between User and Assistant. The user asks a question, and the Assistant solves it. The assistant first thinks about the reasoning process in the mind and then provides the user with the answer. The reasoning process and answer are enclosed within <think> </think> and <answer> </answer> tags, respectively, i.e., <think> reasoning process here </think> <answer> answer here </answer>. User: Please provide an efficient and self-contained Python script that solves the following problem in a markdown code block:
-```
-{prompt}
-```
-"""
-    response = f"""\
-Assistant: <think>
-```{config.azr.language}
-{_MAGIC_SPLITTER_}
-```
-"""
+    
     test_ds = []
+    len_data = len(test_data)
     for i, item in enumerate(test_data):
-        prompt = item['prompt'].strip() + '\n'
-        prompt = task_prompt.format(prompt=prompt)
+        prompt = item['prompt'].strip() + '\n' 
+        prompt = task_prompt.format(instruction_prefix=instruction_prefix[config.azr.evalperf_type].format(Language=Language[config.azr.language]), prompt=prompt)
+        response_prompt = response.format(response_prefix=response_prefix[config.azr.evalperf_type].format(Language=Language[config.azr.language]), language=config.azr.language, _MAGIC_SPLITTER_=_MAGIC_SPLITTER_)
+        test_data[i]['response_header'] = response_prompt.split(_MAGIC_SPLITTER_)[0]
         prompt = tokenizer.apply_chat_template(
             [
                 {"role": "user", "content": prompt},
-                {"role": "assistant", "content": response},
+                {"role": "assistant", "content": response_prompt},
             ],
             tokenize=False,
         ).split(_MAGIC_SPLITTER_)[0]
@@ -115,10 +149,13 @@ Assistant: <think>
         }
         problem_prompt['position_ids'] = compute_position_id_with_mask(attention_mask)[0]
         test_ds.append(problem_prompt)
+    if len_data % config.data.test_batch_size != 0:
+        for _ in range(config.data.test_batch_size - len_data % config.data.test_batch_size):
+            test_ds.append(test_ds[-1])
 
     test_ds = iter(DataLoader(
             dataset=test_ds,
-            batch_size=4,
+            batch_size=config.data.test_batch_size,
             collate_fn=collate_fn,
             sampler=SequentialSampler(test_ds)
         ))
@@ -129,15 +166,21 @@ Assistant: <think>
         gen_batch = batch.pop(batch_keys=['input_ids', 'attention_mask', 'position_ids'])
         gen_batch_output = rollout.generate_sequences(gen_batch)
         for j in range(len(gen_batch_output)):
+            if i * config.data.test_batch_size + j >= len_data:
+                break
             output = gen_batch_output[j]
             prompt_length = output.batch['prompts'].shape[-1]
             valid_response_length = output.batch['attention_mask'][prompt_length:].sum()
             valid_output = output.batch['responses'][:valid_response_length]
             output_text = tokenizer.decode(valid_output)
             print(output_text)
-            code_snippet = extract_code(output_text.split("<answer>")[-1].split("</answer>")[0], config.azr.language)
-            code_snippet =  code_snippet + '\n' + test_data[i * 4 + j]['test'].strip()
-            #print(code_snippet)
+            if config.azr.evalperf_type == 'azr':
+                code_snippet = extract_code(output_text.split("<answer>")[-1].split("</answer>")[0], config.azr.language)
+            else:
+                code_snippet = extract_code(test_data[i * config.data.test_batch_size + j]['response_header'] + output_text, config.azr.language)
+                #code_snippet = extract_code(test_data[i * config.data.test_batch_size + j]['prompt'].split('\n')[-2] + '\n' + output_text, config.azr.language)
+            code_snippet =  code_snippet + '\n' + test_data[i * config.data.test_batch_size + j]['tests'].strip()
+            print(code_snippet)
             _, status = executor.apply(code_snippet)
             num_correct += status == 'done'
     print(f'accuracy: {num_correct / len(test_data) * 100:.2f}')

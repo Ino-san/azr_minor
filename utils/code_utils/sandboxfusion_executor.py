@@ -180,12 +180,14 @@ class SandboxfusionExecutor:
             code = '\n'.join(imports) + '\n' + code
         code_snippet = RUN_CODE_TEMPLATE_REPR[self.language].format(code=code, inputs=inputs)
         # print(code_snippet)
+        """
         if self.ast_check:
             try:
                 ast.parse(code_snippet)
             except:
                 return '', 'error'
         return self.apply(code_snippet)
+        """
     #unused
     def validate_code(self, code: str, inputs: str, imports: List[str] = []) -> bool:
         if isinstance(imports, np.ndarray):
@@ -233,11 +235,12 @@ class SandboxfusionExecutor:
         if imports:
             code = '\n'.join(imports) + '\n' + code
         code_snippet = EVAL_OUTPUT_PREDICTION_TEMPLATE_REPR[self.language].format(code=code, gold_output=gold_output, agent_output=agent_output)
-        #print(code_snippet)
+        print(code_snippet)
         max_retries = 3
         for retry in range(max_retries):
             try:
                 correct, status = self.apply(code_snippet)
+                print(correct, status)
                 return 0.0 if 'error' in status.lower() or not eval(correct.capitalize()) else 1.0
             except Exception as e:
                 if retry == max_retries - 1:
@@ -309,10 +312,12 @@ class SandboxfusionExecutor:
             return False, None
         if check_error:
             code_snippet = RUN_CODE_TEMPLATE_REPR[self.language].format(code=code, inputs=inputs)
+            """
             try:
                 ast.parse(code_snippet)
             except:
                 return False, 'error'
+            """
             output, status = self.apply(code_snippet)
             if check_determinism: # run the code again, see if outputs are same
                 output_2, status_2 = self.apply(code_snippet)
@@ -337,6 +342,7 @@ class SandboxfusionExecutor:
             return not 'error' in status.lower(), output
 
     def apply(self, code) -> Tuple[str, str]:
+        #print(code)
         try:
             response = run_code(
                 RunCodeRequest(

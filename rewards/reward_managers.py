@@ -837,6 +837,8 @@ class CodeIORewardManager():
             uid = d['uid']
             if self.generation_reward_config.generation_accuracy_convertion == 'one_minus':
                 rewards[uid]['accuracy'] = (1 - accuracies[uid]) if accuracies[uid] > 0 else 0.0
+                #rewards[uid]['accuracy'] = 2 * (0.5 - abs(0.5 - accuracies[uid])) # peak at 0.5
+                #rewards[uid]['accuracy'] = accuracies[uid]  * (1 - accuracies[uid]) * 4 # peak at 0.5, scaled to [0, 1]
             elif self.generation_reward_config.generation_accuracy_convertion == 'inverse':
                 rewards[uid]['accuracy'] = 1 - accuracies[uid]
             else:

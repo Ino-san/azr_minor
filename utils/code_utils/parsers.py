@@ -8,6 +8,7 @@ import_string = {
     "java": "import",
     "cpp": "#include",
     "go": "import",
+    "julia": "import",
 }
 
 def parse_imports(code_snippet: str, language: str) -> List[str]:

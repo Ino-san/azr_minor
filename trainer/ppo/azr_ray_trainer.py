@@ -54,7 +54,12 @@ seed_program = {
 }""",
 "go": """func f(a int) int {
     return a;
-}"""      
+}""",
+"julia": """
+function f(a)
+    return a
+end
+"""
 }
 
 imports = {
@@ -62,7 +67,8 @@ imports = {
 "java": ["import java.util.*;"],
 "nodejs": ["import * as utils from './utils.js';"],
 "cpp": ["#include <iostream>"],
-"go": ["import (", "    \"fmt\"", "    \"strings\"", ")"]
+"go": ["import (", "    \"fmt\"", "    \"strings\"", ")"],
+"julia": []
 }
 
 seed_io = {
@@ -71,6 +77,7 @@ seed_io = {
     "nodejs": ['"Hello world"', '1', '({a: 1, b: 2})', '(1.1, 1.2, 1.3)', '"[[1, 0, 0], [0, 0, 0], [0, 0, 0]]"', '1001101100010001'],
     "cpp": ['"Hello world"', '1','std::unordered_map<std::string, int>{{"a", 1}, {"b", 2}}', 'std::tuple<float, float, float>{1.1, 1.2, 1.3}', 'std::vector<std::vector<int>>{{1, 0, 0}, {0, 0, 0}, {0, 0, 0}}', '1001101100010001'],
     "go": ['"Hello world"', '1', 'a := []int{1, 2, 3}', '(1.1, 1.2, 1.3)', '"[[1, 0, 0], [0, 0, 0], [0, 0, 0]]"', '1001101100010001'],
+    "julia": ['"Hello world"', '1', 'Dict("a" => 1, "b" => 2)', '(1.1, 1.2, 1.3)', '"[[1, 0, 0], [0, 0, 0], [0, 0, 0]]"', '1001101100010001'],
 }
 
 def create_default_dict():

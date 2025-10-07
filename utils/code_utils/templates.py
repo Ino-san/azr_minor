@@ -19,6 +19,8 @@ int main() {{
 """,
 "go": """{code}
 fmt.Println("<FINAL_REPR_SYMBOL> ", f({inputs}))""",
+"julia": """{code}
+println("<FINAL_REPR_SYMBOL> ", f({inputs}))""",
 }
 
 VALIDATE_CODE_TEMPLATE = """{code}
@@ -39,6 +41,8 @@ int main() {{
 """,                                     
 "go": """{code}
 fmt.Println("<FINAL_REPR_SYMBOL>", f({inputs}))""",
+"julia": """{code}
+println("<FINAL_REPR_SYMBOL> ", f({inputs}))""",
 }
 
 EVAL_INPUT_PREDICTION_TEMPLATE = """{code}
@@ -59,8 +63,11 @@ int main() {{
 """,
 "go": """{code}
 func main() {{
-    fmt.Println("<FINAL_REPR_SYMBOL>", {gold_output} == f({agent_input}))
+    fmt.Println("<FINAL_REPR_SYMBOL>", ({gold_output}) == f({agent_input}))
 }}
+""",
+"julia": """{code}
+println("<FINAL_REPR_SYMBOL> ", ({gold_output}) == f({agent_input}))
 """,
 }
 
@@ -73,15 +80,18 @@ print('<FINAL_REPR_SYMBOL>', {gold_output} == {agent_output})""",
 "nodejs": """{code}
 console.log('<FINAL_REPR_SYMBOL>', ({gold_output}) == ({agent_output}))""",
 "java": """{code}
-System.out.println("<FINAL_REPR_SYMBOL>" + (eval({gold_output}) == eval({agent_output})));""",
+System.out.println("<FINAL_REPR_SYMBOL>" + (({gold_output}) == ({agent_output})));""",
 "cpp": """{code}
 int main() {{
-    std::cout << "<FINAL_REPR_SYMBOL> " << (eval({gold_output}) == eval({agent_output})) << std::endl;
+    std::cout << "<FINAL_REPR_SYMBOL> " << (({gold_output}) == ({agent_output})) << std::endl;
     return 0;
 }}
 """,
 "go": """{code}
-fmt.Println("<FINAL_REPR_SYMBOL>", eval({gold_output}) == eval({agent_output}))""",
+fmt.Println("<FINAL_REPR_SYMBOL>", ({gold_output}) == ({agent_output}))""",
+"julia": """{code}
+println("<FINAL_REPR_SYMBOL> ", ({gold_output}) == ({agent_output}))
+""",
 }
 
 CHECK_DETERMINISM_TEMPLATE = {
@@ -162,6 +172,13 @@ if reflect.TypeOf(returns).Kind() == reflect.String {{
     returns = fmt.Sprintf("'%s'", returns)
 }}
 fmt.Println("<FINAL_REPR_SYMBOL>", returns)""",
+"julia": """{code}
+returns = f({inputs})
+if typeof(returns) == String
+    returns = "\\\"" * returns * "\\\""
+end
+println("<FINAL_REPR_SYMBOL> ", returns)
+""",
 }
 
 output_string = {
@@ -177,6 +194,9 @@ int main() {
 """,
 "go": """{code}
 acc_list := []bool{{}}""",
+"julia": """{code}
+acc_list = Bool[]
+"""
 }
 
 append_string = {
