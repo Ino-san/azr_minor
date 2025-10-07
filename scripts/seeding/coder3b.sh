@@ -7,17 +7,17 @@ export HYDRA_FULL_ERROR=1
 export PYTHONPATH="${PYTHONPATH}:$(pwd)/verl"
 
 # Define default paths, allowing overrides via environment variables
-OUTPUT_SEED_PATH=${OUTPUT_SEED_PATH:-data/3b_coder_nodejs_seed_io.jsonl}
-OUTPUT_ERROR_SEED_PATH=${OUTPUT_ERROR_SEED_PATH:-data/3b_coder_nodejs_error_seed_io.jsonl}
-OUTPUT_CODE_F_SEED_PATH=${OUTPUT_CODE_F_SEED_PATH:-data/3b_coder_nodejs_code_f_seed_io.jsonl}
+OUTPUT_SEED_PATH=${OUTPUT_SEED_PATH:-data/3b_coder_julia_seed_io.jsonl}
+OUTPUT_ERROR_SEED_PATH=${OUTPUT_ERROR_SEED_PATH:-data/3b_coder_julia_error_seed_io.jsonl}
+OUTPUT_CODE_F_SEED_PATH=${OUTPUT_CODE_F_SEED_PATH:-data/3b_coder_julia_code_f_seed_io.jsonl}
 
 python -m azr_minor.main_azr_minor_ppo \
-    azr.language=nodejs \
+    azr.language=julia \
     data.shuffle=True \
     actor_rollout_ref.ref.include_ref=False \
     algorithm.adv_estimator=reinforce_plus_plus \
-    data.train_files=data/code_reason/js_test_answer.parquet \
-    data.val_files=data/code_reason/js_test_answer.parquet \
+    data.train_files=data/code_reason/julia_test_answer.parquet \
+    data.val_files=data/code_reason/julia_test_answer.parquet \
     data.train_batch_size=64 \
     data.val_batch_size=1312 \
     data.max_prompt_length=6144 \
@@ -70,7 +70,7 @@ python -m azr_minor.main_azr_minor_ppo \
     azr.output_code_f_seed_path=${OUTPUT_CODE_F_SEED_PATH} \
     azr.pretrain_pred_steps=-1 \
     azr.executor=sandboxfusion \
-    azr.ast_check=True \
+    azr.ast_check=False \
     azr.reward.n_samples=8 \
     azr.problem_types=['code_i','code_o','code_f'] \
     azr.data_selection_strategy.banned_keywords_for_errors_and_exceptions=['raise'] \
