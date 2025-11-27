@@ -21,6 +21,10 @@ int main() {{
 fmt.Println("<FINAL_REPR_SYMBOL> ", f({inputs}))""",
 "julia": """{code}
 println("<FINAL_REPR_SYMBOL> ", f({inputs}))""",
+"rust": """{code}
+fn main() {{
+    println!("<FINAL_REPR_SYMBOL> {{}}", f({inputs}));
+}}""",
 }
 
 VALIDATE_CODE_TEMPLATE = """{code}
@@ -43,6 +47,11 @@ int main() {{
 fmt.Println("<FINAL_REPR_SYMBOL>", f({inputs}))""",
 "julia": """{code}
 println("<FINAL_REPR_SYMBOL> ", f({inputs}))""",
+"rust": """{code}
+fn main() {{
+    println!("<FINAL_REPR_SYMBOL> ", f({inputs}));
+}}
+""",
 }
 
 EVAL_INPUT_PREDICTION_TEMPLATE = """{code}
@@ -69,6 +78,11 @@ func main() {{
 "julia": """{code}
 println("<FINAL_REPR_SYMBOL> ", ({gold_output}) == f({agent_input}))
 """,
+"rust": """{code}
+fn main() {{
+    println!("<FINAL_REPR_SYMBOL> {{}}", ({gold_output}) == f({agent_input}));
+}}
+""",
 }
 
 EVAL_OUTPUT_PREDICTION_TEMPLATE = """{code}
@@ -91,6 +105,11 @@ int main() {{
 fmt.Println("<FINAL_REPR_SYMBOL>", ({gold_output}) == ({agent_output}))""",
 "julia": """{code}
 println("<FINAL_REPR_SYMBOL> ", ({gold_output}) == ({agent_output}))
+""",
+"rust": """{code}
+fn main() {{
+    println!("<FINAL_REPR_SYMBOL> {{}}", ({gold_output}) == ({agent_output}));
+}}
 """,
 }
 
@@ -123,7 +142,16 @@ returns := f({inputs})
 if returns != f({inputs}) {{
     panic("Non-deterministic code")
 }}
-return returns;"""
+return returns;""",
+"rust": """{code}
+fn main() {{
+    let returns = f({inputs});
+    if returns != f({inputs}) {{
+        panic!("Non-deterministic code");
+    }}
+    returns
+}}
+""",
 }
 
 CHECK_DETERMINISM_TEMPLATE_REPR = {
@@ -179,6 +207,15 @@ if typeof(returns) == String
 end
 println("<FINAL_REPR_SYMBOL> ", returns)
 """,
+"rust": """{code}
+fn main() {{
+    let returns = f({inputs});
+    if returns != f({inputs}) {{
+        panic!("Non-deterministic code");
+    }}
+    println!("<FINAL_REPR_SYMBOL> {{}}", returns);
+}}
+""",
 }
 
 output_string = {
@@ -196,7 +233,11 @@ int main() {
 acc_list := []bool{{}}""",
 "julia": """{code}
 acc_list = Bool[]
-"""
+""",
+"rust": """{code}
+fn main() {{
+    let mut acc_list = Vec::new();
+}}""",
 }
 
 append_string = {

@@ -357,7 +357,7 @@ class SandboxfusionExecutor:
                 # taking [1:-1] to exclude prefix space and suffix newline
                 return response.run_result.stdout.split('<FINAL_REPR_SYMBOL>')[-1][1:-1], 'done'
             else:
-                #print('Error in response:', response.run_result.stderr)
+                print('Error in response:', response.run_result.stderr)
                 return '', 'error'
 
         except Exception as e:

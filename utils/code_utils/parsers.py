@@ -9,6 +9,7 @@ import_string = {
     "cpp": "#include",
     "go": "import",
     "julia": "import",
+    "rust": "use",
 }
 
 def parse_imports(code_snippet: str, language: str) -> List[str]:

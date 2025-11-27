@@ -6,7 +6,8 @@ language_name = {
     "nodejs": "JavaScript", 
     "cpp": "C++", 
     "go": "Go",
-    "julia": "Julia"
+    "julia": "Julia",
+    "rust": "Rust",
     }
 
 code_format = {
@@ -50,6 +51,12 @@ function f(...)
     # your code here
     return ...
 end
+```""",
+"rust": """
+```rust
+fn f(...) -> ... {
+    // your code here
+    ...;
 ```"""
 }
 
@@ -94,7 +101,14 @@ function f(name, info)
     # code logic here
     return result
 end
-```"""
+```""",
+"rust": """
+```rust
+fn f(name: String, info: HashMap<String, i32>) -> i32 {
+    // code logic here
+    result
+}
+```""",
 }
 
 func_header = {
@@ -103,7 +117,8 @@ func_header = {
 "nodejs": "function f(...) {",
 "cpp": "int f(...) {",
 "go": "func f(...) ... {",
-"julia": "function f(...)"
+"julia": "function f(...)",
+"rust": "fn f(...) -> ... {",
 }
 
 seed_func = {
@@ -135,7 +150,12 @@ func f(a int) int {
 function f(a)
     return a
 end
-"""
+""",
+"rust": """
+fn f(a: i32) -> i32 {
+    a
+}
+""",
 }
 
 dict_example = {
@@ -144,7 +164,8 @@ dict_example = {
 "nodejs": "{\"age\": 20, \"city\": \"New York\"}",
 "cpp": "20, \"New York\"",
 "go": "info := map[string]int{\"age\": 20, \"city\": \"New York\"}",
-"julia": "Dict(\"age\" => 20, \"city\" => \"New York\")"
+"julia": "Dict(\"age\" => 20, \"city\" => \"New York\")",
+"rust": "HashMap::from([(\"age\".to_string(), 20), (\"city\".to_string(), \"New York\")])",
 }
 
 dict_example2 = {
@@ -153,7 +174,8 @@ dict_example2 = {
 "nodejs": "{\"age\": 37, \"city\": \"Los Angeles\"}",
 "cpp": "37, \"Los Angeles\"",
 "go": "info := map[string]int{\"age\": 37, \"city\": \"Los Angeles\"}",
-"julia": "Dict(\"age\" => 37, \"city\" => \"Los Angeles\")"
+"julia": "Dict(\"age\" => 37, \"city\" => \"Los Angeles\")",
+"rust": "HashMap::from([(\"age\".to_string(), 37), (\"city\".to_string(), \"Los Angeles\")])",
 }
 
 code_input_prompt = """

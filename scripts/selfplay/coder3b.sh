@@ -6,17 +6,17 @@ export RAY_LOGGING_LEVEL=DEBUG
 export HYDRA_FULL_ERROR=1
 export PYTHONPATH="${PYTHONPATH}:$(pwd)/verl"
 
-OUTPUT_SEED_PATH=${OUTPUT_SEED_PATH:-data/3b_coder_julia_seed_io.jsonl}
-OUTPUT_ERROR_SEED_PATH=${OUTPUT_ERROR_SEED_PATH:-data/3b_coder_julia_error_seed_io.jsonl}
-OUTPUT_CODE_F_SEED_PATH=${OUTPUT_CODE_F_SEED_PATH:-data/3b_coder_julia_code_f_seed_io.jsonl}
+OUTPUT_SEED_PATH=${OUTPUT_SEED_PATH:-data/3b_coder_rust_seed_io.jsonl}
+OUTPUT_ERROR_SEED_PATH=${OUTPUT_ERROR_SEED_PATH:-data/3b_coder_rust_error_seed_io.jsonl}
+OUTPUT_CODE_F_SEED_PATH=${OUTPUT_CODE_F_SEED_PATH:-data/3b_coder_rust_code_f_seed_io.jsonl}
 
 python -m azr_minor.main_azr_minor_ppo \
-    azr.language=julia \
+    azr.language=rust \
     data.shuffle=True \
     actor_rollout_ref.ref.include_ref=False \
     algorithm.adv_estimator=reinforce_plus_plus \
-    data.train_files=data/code_reason/julia_test_answer.parquet \
-    data.val_files=data/code_reason/julia_test_answer.parquet \
+    data.train_files=data/code_reason/rust_test_answer.parquet \
+    data.val_files=data/code_reason/rust_test_answer.parquet \
     data.train_batch_size=64 \
     data.val_batch_size=1312 \
     data.max_prompt_length=6144 \
@@ -30,7 +30,7 @@ python -m azr_minor.main_azr_minor_ppo \
     actor_rollout_ref.actor.use_kl_loss=False \
     actor_rollout_ref.actor.kl_loss_coef=0.0 \
     actor_rollout_ref.actor.kl_loss_type=low_var_kl \
-    actor_rollout_ref.actor.ulysses_sequence_parallel_size=2 \
+    actor_rollout_ref.actor.ulysses_sequence_parallel_size=4 \
     actor_rollout_ref.model.enable_gradient_checkpointing=True \
     actor_rollout_ref.model.pretrained_tokenizer=True \
     actor_rollout_ref.actor.fsdp_config.param_offload=False \
@@ -49,9 +49,9 @@ python -m azr_minor.main_azr_minor_ppo \
     algorithm.kl_ctrl.kl_coef=0.0 \
     trainer.critic_warmup=0 \
     trainer.logger=['console','wandb'] \
-    trainer.project_name='azr_minor_julia' \
+    trainer.project_name='azr_minor_rust' \
     trainer.experiment_name='azr_coder_3b' \
-    trainer.n_gpus_per_node=2 \
+    trainer.n_gpus_per_node=4 \
     trainer.nnodes=1 \
     trainer.save_freq=64 \
     trainer.remove_previous_ckpt_in_save=False \
@@ -105,5 +105,5 @@ python -m azr_minor.main_azr_minor_ppo \
     azr.data_selection_strategy.composite_function_n_min=0 \
     azr.data_selection_strategy.composite_function_n_max=0 \
     azr.reward.code_f_reward_type=binary \
-    trainer.wandb_run_id=6uuhu12l \
+    trainer.wandb_run_id=hq7bye44 \
     trainer.total_epochs=15 $@

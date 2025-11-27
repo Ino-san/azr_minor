@@ -59,7 +59,10 @@ seed_program = {
 function f(a)
     return a
 end
-"""
+""",
+"rust": """fn f<T>(a: T) -> T {
+    a
+}""",
 }
 
 imports = {
@@ -68,7 +71,8 @@ imports = {
 "nodejs": ["import * as utils from './utils.js';"],
 "cpp": ["#include <iostream>"],
 "go": ["import (", "    \"fmt\"", "    \"strings\"", ")"],
-"julia": []
+"julia": [],
+"rust": ["use std::collections::HashMap;"],
 }
 
 seed_io = {
@@ -78,6 +82,7 @@ seed_io = {
     "cpp": ['"Hello world"', '1','std::unordered_map<std::string, int>{{"a", 1}, {"b", 2}}', 'std::tuple<float, float, float>{1.1, 1.2, 1.3}', 'std::vector<std::vector<int>>{{1, 0, 0}, {0, 0, 0}, {0, 0, 0}}', '1001101100010001'],
     "go": ['"Hello world"', '1', 'a := []int{1, 2, 3}', '(1.1, 1.2, 1.3)', '"[[1, 0, 0], [0, 0, 0], [0, 0, 0]]"', '1001101100010001'],
     "julia": ['"Hello world"', '1', 'Dict("a" => 1, "b" => 2)', '(1.1, 1.2, 1.3)', '"[[1, 0, 0], [0, 0, 0], [0, 0, 0]]"', '1001101100010001'],
+    "rust": ['"Hello world"', '1', 'HashMap::from([("a", 1), ("b", 2)])', '(1.1, 1.2, 1.3)', 'vec![vec![1, 0, 0], vec![0, 0, 0], vec![0, 0, 0]]', '1001101100010001'],
 }
 
 def create_default_dict():

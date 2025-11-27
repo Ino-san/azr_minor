@@ -24,7 +24,8 @@ Language = {
     "cpp": "C++",
     "java": "Java",
     "go": "Go",
-    "julia": "Julia"
+    "julia": "Julia",
+    "rust": "Rust",
 }
 
 instruction_prefix = {
