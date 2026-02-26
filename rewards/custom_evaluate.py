@@ -40,7 +40,7 @@ def choice_answer_clean(pred: str):
 def extract_code(completion: str, language: str = "python") -> str:
     pattern = re.compile(rf"```{language}\n(.*?)```", re.DOTALL)
     matches = pattern.findall(completion)
-    extracted_answer = matches[-1] if len(matches) >= 1 else ""
+    extracted_answer = matches[0] if len(matches) >= 1 else ""
     return extracted_answer
 
 

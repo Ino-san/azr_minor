@@ -31,6 +31,8 @@ def get_gen_code_io_data(
     num_inputs: int = 10,
     remove_input_from_snippet: bool = False,
     include_references: bool = True,
+    syntax_pool: List[str] = None,
+    init_seed: bool = False,
 ):
     return_io_data = []
     if instruction_type.startswith('boxed'):
@@ -55,6 +57,9 @@ def get_gen_code_io_data(
             chosen_references = []
         else:
             chosen_references = random.choice(io_data, size=min(io_n, len(io_data)), replace=False, p=probabilities)
+        reference_syntax = None
+        if init_seed:
+            reference_syntax = random.choice(syntax_pool, size = io_n, replace=False).tolist()
         # composite functions is not used for code_f problem type
         if problem_type != 'code_f' and composite_function_n_max > 0 and enable_composite_function and random.random() <= composite_chance and len(chosen_references) > composite_function_n_max:
             # TODO: we only allow composite to sample from code snippets without composite functions
@@ -81,12 +86,14 @@ def get_gen_code_io_data(
                 language=language,
                 problem_type=problem_type,
                 reference_snippets=chosen_references,
+                reference_syntax=reference_syntax,
                 banned_keywords=banned_keywords,
                 banned_assertion_keywords=banned_assertion_keywords,
                 composite_functions=composite_functions,
                 remove_after_return=remove_after_return,
                 num_inputs=num_inputs,
                 remove_input_from_snippet=remove_input_from_snippet,
+                init_seed=init_seed,
             )
         )
         # since we have abundant judge data, we can afford to filter out some data

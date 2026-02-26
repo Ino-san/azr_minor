@@ -10,6 +10,7 @@ import_string = {
     "go": "import",
     "julia": "import",
     "rust": "use",
+    "racket": "\(require",
 }
 
 def parse_imports(code_snippet: str, language: str) -> List[str]:

@@ -8,6 +8,7 @@ language_name = {
     "go": "Go",
     "julia": "Julia",
     "rust": "Rust",
+    "racket": "Racket"
     }
 
 code_format = {
@@ -57,6 +58,14 @@ end
 fn f(...) -> ... {
     // your code here
     ...;
+```""",
+"racket": """
+```racket
+#lang racket
+
+(define (f ...)
+    ... your code here
+)
 ```"""
 }
 
@@ -109,6 +118,14 @@ fn f(name: String, info: HashMap<String, i32>) -> i32 {
     result
 }
 ```""",
+"racket": """
+```racket
+#lang racket
+
+(define (f name info)
+    ; code logic here
+    result)
+```"""
 }
 
 func_header = {
@@ -119,6 +136,7 @@ func_header = {
 "go": "func f(...) ... {",
 "julia": "function f(...)",
 "rust": "fn f(...) -> ... {",
+"racket": "(define (f ...)",
 }
 
 seed_func = {
@@ -156,6 +174,12 @@ fn f(a: i32) -> i32 {
     a
 }
 """,
+"racket": """
+#lang racket
+
+(define (f a)
+    a)
+"""
 }
 
 dict_example = {
@@ -166,6 +190,7 @@ dict_example = {
 "go": "info := map[string]int{\"age\": 20, \"city\": \"New York\"}",
 "julia": "Dict(\"age\" => 20, \"city\" => \"New York\")",
 "rust": "HashMap::from([(\"age\".to_string(), 20), (\"city\".to_string(), \"New York\")])",
+"racket": "(hash 'age 20 'city \"New York\")"
 }
 
 dict_example2 = {
@@ -176,6 +201,7 @@ dict_example2 = {
 "go": "info := map[string]int{\"age\": 37, \"city\": \"Los Angeles\"}",
 "julia": "Dict(\"age\" => 37, \"city\" => \"Los Angeles\")",
 "rust": "HashMap::from([(\"age\".to_string(), 37), (\"city\".to_string(), \"Los Angeles\")])",
+"racket": "(hash 'age 37 'city \"Los Angeles\")"
 }
 
 code_input_prompt = """
@@ -230,6 +256,62 @@ First, carefully devise a clear plan: e.g., identify how your snippet will be ch
 ### Reference Code Snippets:
 """
 
+code_input_prompt_with_info = """
+## Task: Create a {Language} Code Snippet (where custom modules are allowed, which should be defined at the top of the code snippet) with one Matching Input
+
+Using the reference code snippets provided below as examples, design a new and unique {Language} code snippet that demands deep algorithmic reasoning to deduce one possible input from a given output. Your submission should include both a code snippet and test input pair, where the input will be plugged into the code snippet to produce the output, which that function output be given to a test subject to come up with any input that will produce the same function output. This is meant to be an I.Q. test.
+
+### Code Requirements:
+- Name the entry function `f` (e.g., `{func_header} ...`), you can have nested definitions inside `f`
+- Ensure the function returns a value
+- Include at least one input parameter
+- Make the function deterministic
+- Function `main` should do nothing
+- Make the snippet require state tracking across multiple data transformations, ensuring the task requires long multi step reasoning
+- AVOID THE FOLLOWING:
+  * Random functions or variables
+  * Date/time operations
+  * I/O operations (reading files, network requests)
+  * Printing or logging
+  * Any external state
+- Ensure execution completes within 10 seconds on a modern CPU
+- All imports and module definitions should be at the very top of the code snippet
+- The snippet should end with a return statement from the main function `f`, anything after will be removed
+{remove_input_from_snippet_prompt}{remove_after_return_prompt}
+### Input Requirements:
+- Provide exactly one test input for your function
+- Format multiple arguments with commas between them
+- Remember to add quotes around string arguments
+
+### Formatting:
+- Format your code with: {code_format}
+- Format your input with: 
+```input
+arg1, arg2, ...
+```
+
+### Example Format:
+{example_code_format}
+
+```input
+"John", {dict_example}
+```
+
+### Evaluation Criteria:
+- Executability, your code should be executable given your input
+- Difficulty in predicting the output from your provided input and code snippet. Focus on either algorithmic reasoning or logic complexity. For example, you can define complex data structure modules and operate on them like trees, heaps, stacks, queues, graphs, etc, or use complex control flow, dynamic programming, recursions, divide and conquer, greedy, backtracking, etc
+- Creativity, the code needs to be sufficiently different from the provided banned snippets
+- Syntax and semantic correctness, the code should be created corrctly according to the reference code snippets
+- Restricted usage of certain keywords and packages, you are not allowed to use the following words in any form, even in comments: <|BANNED_KEYWORDS|>
+
+First, carefully devise a clear plan: e.g., identify how your snippet will be challenging, distinct from reference snippets, and creative. Then, write the final code snippet and its inputs.
+
+### Banned Code Snippets:
+{banned_snippet_string}
+### Reference Code Snippets:
+{reference_snippet_string}
+"""
+
 code_output_prompt = """
 ## Task: Create a New {Language} Code Snippet (where custom modules are allowed, which should be defined at the top of the code snippet) with one Matching Input
 
@@ -280,6 +362,62 @@ arg1, arg2, ...
 First, carefully devise a clear plan: e.g., identify how your snippet will be challenging, distinct from reference snippets, and creative. Then, write the final code snippet and its inputs.
 
 ### Reference Code Snippets:
+"""
+
+code_output_prompt_with_info = """
+## Task: Create a New {Language} Code Snippet (where custom modules are allowed, which should be defined at the top of the code snippet) with one Matching Input
+
+Using the reference code snippets provided below as examples, design a new and unique {Language} code snippet that demands deep algorithmic reasoning to deduce the output from the input. Your submission should include a code snippet and a test input pair, where the input will be plugged into the code snippet to produce the output. The input will be given to a test subject to deduce the output, which is meant to be an I.Q. test.
+
+### Code Requirements:
+- Name the entry function `f` (e.g., `{func_header} ...`), you can have nested definitions inside `f`
+- Ensure the function returns a value
+- Include at least one input parameter
+- Make the function deterministic
+- Function `main` should do nothing
+- Make the snippet require state tracking across multiple data transformations, ensuring the task requires long multi step reasoning
+- AVOID THE FOLLOWING:
+  * Random functions or variables
+  * Date/time operations
+  * I/O operations (reading files, network requests)
+  * Printing or logging
+  * Any external state
+- Ensure execution completes within 10 seconds on a modern CPU
+- All imports and module definitions should be at the very top of the code snippet
+- The snippet should end with a return statement from the main function `f`, anything after will be removed
+{remove_input_from_snippet_prompt}{remove_after_return_prompt}
+### Input Requirements:
+- Provide exactly one test input for your function
+- Format multiple arguments with commas between them
+- Remember to add quotes around string arguments
+
+### Formatting:
+- Format your code with:{code_format}
+- Format your input with:
+```input
+arg1, arg2, ...
+```
+
+### Example Format:
+{example_code_format}
+
+```input
+"John", {dict_example}
+```
+
+### Evaluation Criteria:
+- Executability, your code should be executable given your input
+- Difficulty in predicting your ```input``` from 1) your ```{language}``` code and 2) the deterministic ```output``` that will be obtained from your ```input```. Focus on either algorithmic reasoning or logic complexity. For example, you can define complex data structure modules and operate on them like trees, heaps, stacks, queues, graphs, etc, or use complex control flow, dynamic programming, recursions, divide and conquer, greedy, backtracking, etc
+- Creativity, the code needs to be sufficiently different from the provided banned snippets
+- Syntax and semantic correctness, the code should be created corrctly according to the reference code snippets
+- Restricted usage of certain keywords and packages, you are not allowed to use the following words in any form, even in comments: <|BANNED_KEYWORDS|>
+
+First, carefully devise a clear plan: e.g., identify how your snippet will be challenging, distinct from reference snippets, and creative. Then, write the final code snippet and its inputs.
+
+### Banned Code Snippets:
+{banned_snippet_string}
+### Reference Code Snippets:
+{reference_snippet_string}
 """
 
 code_error_prompt = """
@@ -487,12 +625,14 @@ def get_code_problem_generator_prompt(
     language: str,
     problem_type: str,
     reference_snippets: List[Dict[str, str]],
+    reference_syntax: List[str],
     banned_keywords: List[str],
     banned_assertion_keywords: List[str],
     composite_functions: List[str] = None,
     remove_after_return: bool = False,
     num_inputs: int = 10,
     remove_input_from_snippet: bool = False,
+    init_seed: bool = False,
 ) -> str:
     # assert not (remove_after_return and not remove_input_from_snippet)
     composite_functions = list(composite_functions)
@@ -502,40 +642,87 @@ def get_code_problem_generator_prompt(
         for i, snippet in enumerate(reference_snippets):
             snippet_string += f"<snippet_{i}>\n```{language}\n{snippet['snippet']}\n```\n```input\n{snippet['input']}\n```\n```{output_key}\n{snippet['output']}\n```\n</snippet_{i}>\n"
     if problem_type == "code_i":
-        return code_input_prompt.format(
-            Language=language_name[language],
-            func_header=func_header[language],
-            code_format=code_format[language],
-            dict_example=dict_example[language],
-            example_code_format=example_code_format[language],
-            remove_after_return_prompt=(remove_singleton_variables_prompt if remove_after_return else '\n'),
-            remove_input_from_snippet_prompt=(remove_input_from_snippet_prompt if remove_input_from_snippet else '')
-        ).replace(
-            '<|BANNED_KEYWORDS|>', ', '.join(banned_keywords)
-        ) + snippet_string + (
-            composite_requirements_prompt.format(
-                function_names=', '.join([f'`g_{i}`' for i in range(len(composite_functions))]),
-                composite_functions="\n".join([d['snippet'] for d in composite_functions])
-            ) if composite_functions else '\n'
-        )
+        if init_seed:
+            reference_syntax = ""
+            for i, snippet in enumerate(reference_snippets):
+                reference_syntax += f"<snippet_{i}>\n```{language}\n{snippet}\n```\n</snippet_{i}>\n"
+            return code_input_prompt_with_info.format(
+                Language=language_name[language],
+                func_header=func_header[language],
+                code_format=code_format[language],
+                dict_example=dict_example[language],
+                example_code_format=example_code_format[language],
+                remove_after_return_prompt=(remove_singleton_variables_prompt if remove_after_return else '\n'),
+                remove_input_from_snippet_prompt=(remove_input_from_snippet_prompt if remove_input_from_snippet else ''),
+                banned_snippet_string=snippet_string,
+                reference_snippet_string=reference_syntax
+            ).replace(
+                '<|BANNED_KEYWORDS|>', ', '.join(banned_keywords)
+            ) + (
+                composite_requirements_prompt.format(
+                    function_names=', '.join([f'`g_{i}`' for i in range(len(composite_functions))]),
+                    composite_functions="\n".join([d['snippet'] for d in composite_functions])
+                ) if composite_functions else '\n'
+            )
+        else:
+            return code_input_prompt.format(
+                Language=language_name[language],
+                func_header=func_header[language],
+                code_format=code_format[language],
+                dict_example=dict_example[language],
+                example_code_format=example_code_format[language],
+                remove_after_return_prompt=(remove_singleton_variables_prompt if remove_after_return else '\n'),
+                remove_input_from_snippet_prompt=(remove_input_from_snippet_prompt if remove_input_from_snippet else '')
+            ).replace(
+                '<|BANNED_KEYWORDS|>', ', '.join(banned_keywords)
+            ) + snippet_string + (
+                composite_requirements_prompt.format(
+                    function_names=', '.join([f'`g_{i}`' for i in range(len(composite_functions))]),
+                    composite_functions="\n".join([d['snippet'] for d in composite_functions])
+                ) if composite_functions else '\n'
+            )
     elif problem_type == "code_o":
-        return code_output_prompt.format(
-            Language=language_name[language],
-            func_header=func_header[language],
-            code_format=code_format[language],
-            dict_example=dict_example[language],
-            example_code_format=example_code_format[language],
-            language=language,
-            remove_after_return_prompt=(remove_singleton_variables_prompt if remove_after_return else '\n'),
-            remove_input_from_snippet_prompt=(remove_input_from_snippet_prompt if remove_input_from_snippet else '')
-        ).replace(
-            '<|BANNED_KEYWORDS|>', ', '.join(banned_keywords)
-        ) + snippet_string + (
-            composite_requirements_prompt.format(
-                function_names=', '.join([f'`g_{i}`' for i in range(len(composite_functions))]),
-                composite_functions="\n".join([d['snippet'] for d in composite_functions])
-            ) if composite_functions else '\n'
-        )
+        if init_seed:
+            reference_syntax = ""
+            for i, snippet in enumerate(reference_snippets):
+                reference_syntax += f"<snippet_{i}>\n```{language}\n{snippet}\n```\n</snippet_{i}>\n"
+            return code_output_prompt_with_info.format(
+                Language=language_name[language],
+                func_header=func_header[language],
+                code_format=code_format[language],
+                dict_example=dict_example[language],
+                example_code_format=example_code_format[language],
+                language=language,
+                remove_after_return_prompt=(remove_singleton_variables_prompt if remove_after_return else '\n'),
+                remove_input_from_snippet_prompt=(remove_input_from_snippet_prompt if remove_input_from_snippet else ''),
+                banned_snippet_string=snippet_string,
+                reference_snippet_string=reference_syntax
+            ).replace(
+                '<|BANNED_KEYWORDS|>', ', '.join(banned_keywords)
+            ) + (
+                composite_requirements_prompt.format(
+                    function_names=', '.join([f'`g_{i}`' for i in range(len(composite_functions))]),
+                    composite_functions="\n".join([d['snippet'] for d in composite_functions])
+                ) if composite_functions else '\n'
+            )
+        else:
+            return code_output_prompt.format(
+                Language=language_name[language],
+                func_header=func_header[language],
+                code_format=code_format[language],
+                dict_example=dict_example[language],
+                example_code_format=example_code_format[language],
+                language=language,
+                remove_after_return_prompt=(remove_singleton_variables_prompt if remove_after_return else '\n'),
+                remove_input_from_snippet_prompt=(remove_input_from_snippet_prompt if remove_input_from_snippet else '')
+            ).replace(
+                '<|BANNED_KEYWORDS|>', ', '.join(banned_keywords)
+            ) + snippet_string + (
+                composite_requirements_prompt.format(
+                    function_names=', '.join([f'`g_{i}`' for i in range(len(composite_functions))]),
+                    composite_functions="\n".join([d['snippet'] for d in composite_functions])
+                ) if composite_functions else '\n'
+            )
     elif problem_type == "code_f":
         return code_function_prompt.format(
             dict_example=dict_example[language],

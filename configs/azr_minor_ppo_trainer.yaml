@@ -36,6 +36,8 @@ actor_rollout_ref:
     use_liger: False
     use_fused_kernels: False
     trust_remote_code: True
+    model_kwargs:
+      attn_implementation: "sdpa"
   actor:
     strategy: fsdp2  # This is for backward-compatibility
     ppo_mini_batch_size: 256
@@ -106,6 +108,10 @@ actor_rollout_ref:
       offload_policy: False # only for fsdp2, offload param\grad\optimizer during train
       reshard_after_forward: True # only for fsdp2, [True, False, int between 1 and fsdp_size]
       fsdp_size: -1
+      #model_dtype: bfloat16
+      mixed_precision:
+        param_dtype: bfloat16   # 計算時のキャスト
+        reduce_dtype: bfloat16  # 通信時のキャスト
 
       # Only for FSDP1: FSDP1 configuration, prefetch the next forward-pass all-gather
       # before the current forward computation.

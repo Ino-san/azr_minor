@@ -26,6 +26,17 @@ Language = {
     "go": "Go",
     "julia": "Julia",
     "rust": "Rust",
+    "racket": "Racket",
+}
+comment_out = {
+    "python": "#",
+    "nodejs": "//",
+    "cpp": "//",
+    "java": "//",
+    "go": "//",
+    "julia": "#",
+    "rust": "//",
+    "racket": ";"
 }
 
 instruction_prefix = {
@@ -42,6 +53,16 @@ response_prefix = {
     "azr": "Assistant: <think>"
 }
 
+instruction = """# Task: You will be given a question (problem specification) and will generate a correct {Language} program that matches the specification and passes all tests. Your final answer should be wrapped in ```{language}``` tags.
+Question: {question}
+    
+You will use the following starter code to write the solution to the problem and enclose your code within delimiters.
+```{language}
+{comment_out} YOUR CODE HERE
+```
+        
+Assistant: <think>
+"""
 _MAGIC_SPLITTER_ = "-[[]]-this-is-really-our-highest-priority-[[]]-"
 
 
@@ -112,11 +133,12 @@ def solve(config):
     if config.data.load_checkpoint:
         checkpoint_path = (Path(config.trainer.default_local_dir) / config.data.train_files.split('/')[-1].split('.')[0] / config.actor_rollout_ref.model.path.split('/')[-1] / config.reward_fn.extraction_type / f"global_step_{config.data.checkpoint_global_step}" / "actor").as_posix()
         rollout.load_checkpoint(checkpoint_path)
-
+    print("Model loaded")
     executor = SandboxfusionExecutor(
         language = config.azr.language,
         use_china_mirror = False
     )
+    print("Executor initialized")
     
     test_path = 'azr_minor/evaluation/data/' + config.data.test_file
     with open(test_path, 'r') as f:
@@ -127,6 +149,7 @@ def solve(config):
     len_data = len(test_data)
     for i, item in enumerate(test_data):
         prompt = item['prompt'].strip() + '\n' 
+        """
         prompt = task_prompt.format(instruction_prefix=instruction_prefix[config.azr.evalperf_type].format(Language=Language[config.azr.language]), prompt=prompt)
         response_prompt = response.format(response_prefix=response_prefix[config.azr.evalperf_type].format(Language=Language[config.azr.language]), language=config.azr.language, _MAGIC_SPLITTER_=_MAGIC_SPLITTER_)
         test_data[i]['response_header'] = response_prompt.split(_MAGIC_SPLITTER_)[0]
@@ -137,6 +160,14 @@ def solve(config):
             ],
             tokenize=False,
         ).split(_MAGIC_SPLITTER_)[0]
+        """
+        prompt = instruction.format(language=config.azr.language, Language=Language[config.azr.language], comment_out=comment_out[config.azr.language], question=prompt)
+        prompt = tokenizer.apply_chat_template(
+            [
+                {"role": "user", "content": prompt}
+            ],
+            tokenize=False,
+        )
         input_ids, attention_mask = verl_F.tokenize_and_postprocess_data(prompt=prompt,
                                                                          tokenizer=tokenizer,
                                                                          max_length=config.data.max_prompt_length,
@@ -176,14 +207,18 @@ def solve(config):
             output_text = tokenizer.decode(valid_output)
             print(output_text)
             if config.azr.evalperf_type == 'azr':
-                code_snippet = extract_code(output_text.split("<answer>")[-1].split("</answer>")[0], config.azr.language)
+                code_snippet = extract_code(output_text.split("<|fim_middle|>")[0].split("<answer>")[-1].split("</answer>")[0], config.azr.language)
             else:
                 code_snippet = extract_code(test_data[i * config.data.test_batch_size + j]['response_header'] + output_text, config.azr.language)
                 #code_snippet = extract_code(test_data[i * config.data.test_batch_size + j]['prompt'].split('\n')[-2] + '\n' + output_text, config.azr.language)
             code_snippet =  code_snippet + '\n' + test_data[i * config.data.test_batch_size + j]['tests'].strip()
+            if config.azr.language == 'racket' and "#lang racket" not in code_snippet:
+                code_snippet = "#lang racket\n\n" + code_snippet
             print(code_snippet)
             _, status = executor.apply(code_snippet)
             num_correct += status == 'done'
+            
+    print(num_correct, len(test_data))
     print(f'accuracy: {num_correct / len(test_data) * 100:.2f}')
 
 if __name__ == "__main__":

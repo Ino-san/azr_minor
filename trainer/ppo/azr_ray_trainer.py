@@ -63,6 +63,12 @@ end
 "rust": """fn f<T>(a: T) -> T {
     a
 }""",
+"racket": """#lang racket
+
+(define (f a)
+    a
+)
+""",
 }
 
 imports = {
@@ -73,6 +79,7 @@ imports = {
 "go": ["import (", "    \"fmt\"", "    \"strings\"", ")"],
 "julia": [],
 "rust": ["use std::collections::HashMap;"],
+"racket": [],
 }
 
 seed_io = {
@@ -83,6 +90,7 @@ seed_io = {
     "go": ['"Hello world"', '1', 'a := []int{1, 2, 3}', '(1.1, 1.2, 1.3)', '"[[1, 0, 0], [0, 0, 0], [0, 0, 0]]"', '1001101100010001'],
     "julia": ['"Hello world"', '1', 'Dict("a" => 1, "b" => 2)', '(1.1, 1.2, 1.3)', '"[[1, 0, 0], [0, 0, 0], [0, 0, 0]]"', '1001101100010001'],
     "rust": ['"Hello world"', '1', 'HashMap::from([("a", 1), ("b", 2)])', '(1.1, 1.2, 1.3)', 'vec![vec![1, 0, 0], vec![0, 0, 0], vec![0, 0, 0]]', '1001101100010001'],
+    "racket": ['"Hello world"', '1', '(hash "a" 1 "b" 2)', "'(1.1 1.2 1.3)", "'((1 0 0) (0 0 0) (0 0 0))", '1001101100010001'],
 }
 
 def create_default_dict():
@@ -626,7 +634,7 @@ class DatasetManager:
 
 class CodeIORayPPOTrainer(ReasonRLRayPPOTrainer):
     _supported_tasks = {'code_i', 'code_o', 'code_e', 'code_f'}
-    def __init__(self, past_epoch_window: int = 10, *args, **kwargs):
+    def __init__(self, past_epoch_window: int = 10, ref_syntax_path: str = None, *args, **kwargs):
         super().__init__(*args, **kwargs)
         assert self.config.actor_rollout_ref.rollout.n == 1, "CodeIO only supports n=1 for now"
         assert all(problem_type in self._supported_tasks for problem_type in self.config.azr.problem_types), \
@@ -648,6 +656,9 @@ class CodeIORayPPOTrainer(ReasonRLRayPPOTrainer):
             )
         else:
             raise ValueError(f'Invalid executor: {self.config.azr.executor}')
+        if ref_syntax_path:
+            f = open(ref_syntax_path, 'r')
+            self.ref_syntax = [json.loads(line)['output'] for line in f.readlines()]
         self.dataset_manager = DatasetManager.remote()
         self._last_cleanup_step = 0
         self._cleanup_frequency = self.config.azr.get('executor_cleanup_frequency', 5)
@@ -725,6 +736,11 @@ class CodeIORayPPOTrainer(ReasonRLRayPPOTrainer):
             'remove_input_from_snippet': self.config.azr.reward.generation_reward_config.remove_input_from_snippet,
             'include_references': self.config.azr.reward.generation_reward_config.include_references,
         }
+        if seeding and problem_type != 'code_f':
+            gen_params.update({
+                'init_seed': True,
+                'syntax_pool': self.ref_syntax
+            })
 
         # Add code_f specific parameters
         if problem_type == 'code_f':
@@ -1100,8 +1116,8 @@ class CodeIORayPPOTrainer(ReasonRLRayPPOTrainer):
                 }
             ], self.global_steps))
 
-        target_size = self.config.azr.data_selection_strategy.data_len * self.config.azr.data_selection_strategy.seed_batch_factor
-
+        #target_size = self.config.azr.data_selection_strategy.data_len * self.config.azr.data_selection_strategy.seed_batch_factor
+        target_size = 256
         while problem_types != ['code_f']: # we can skip this loop if we are only generating code_f dataset
             # Get current dataset state
             seed_dataset = ray.get(self.dataset_manager.get_dataset.remote('seed'))
@@ -1274,6 +1290,20 @@ class CodeIORayPPOTrainer(ReasonRLRayPPOTrainer):
                     if len(error_dataset) >= target_size:
                         break
 
+        ray.get(self.dataset_manager.truncate_datasets.remote(target_size, 'seed'))
+        seed_dataset = ray.get(self.dataset_manager.get_dataset.remote('seed'))
+
+        # Modify dataset saving condition
+        if ('code_i' in problem_types or 'code_o' in problem_types) and self.config.azr.output_seed_path is not None:
+            PrettyPrinter.status("DATASET", "Writing seed dataset to JSONL file...", "info")
+            output_path = Path(self.config.azr.output_seed_path)
+            output_path.parent.mkdir(parents=True, exist_ok=True)
+
+            with open(output_path, 'w') as f:
+                for item in seed_dataset:
+                    f.write(json.dumps(item) + '\n')
+            PrettyPrinter.status("DATASET", f"Saved {len(seed_dataset)} entries to {str(output_path)}", "success")
+            
         # now get the code_f dataset
         if 'code_f' in problem_types:
             code_f_dataset = []
@@ -1367,7 +1397,6 @@ class CodeIORayPPOTrainer(ReasonRLRayPPOTrainer):
                     break
 
         # truncate the dataset to the target size
-        ray.get(self.dataset_manager.truncate_datasets.remote(target_size, 'seed'))
         ray.get(self.dataset_manager.truncate_datasets.remote(target_size, 'error_seed'))
         ray.get(self.dataset_manager.truncate_datasets.remote(target_size, 'problem'))
 
@@ -1399,20 +1428,8 @@ class CodeIORayPPOTrainer(ReasonRLRayPPOTrainer):
                             PrettyPrinter.status("    Example", example, "info")
 
         # Final dataset from coordinator
-        seed_dataset = ray.get(self.dataset_manager.get_dataset.remote('seed'))
         error_dataset = ray.get(self.dataset_manager.get_dataset.remote('error_seed'))
         code_f_dataset = ray.get(self.dataset_manager.get_dataset.remote('problem'))
-
-        # Modify dataset saving condition
-        if ('code_i' in problem_types or 'code_o' in problem_types) and self.config.azr.output_seed_path is not None:
-            PrettyPrinter.status("DATASET", "Writing seed dataset to JSONL file...", "info")
-            output_path = Path(self.config.azr.output_seed_path)
-            output_path.parent.mkdir(parents=True, exist_ok=True)
-
-            with open(output_path, 'w') as f:
-                for item in seed_dataset:
-                    f.write(json.dumps(item) + '\n')
-            PrettyPrinter.status("DATASET", f"Saved {len(seed_dataset)} entries to {str(output_path)}", "success")
 
         if 'code_e' in problem_types and self.config.azr.output_error_seed_path is not None:
             PrettyPrinter.status("DATASET", "Writing error seed dataset to JSONL file...", "info")
@@ -1573,8 +1590,9 @@ class CodeIORayPPOTrainer(ReasonRLRayPPOTrainer):
                     PrettyPrinter.status("DATA", "Loading seed dataset from file...", "info")
                     with open(self.config.azr.seed_dataset, 'r') as file:
                         seed_dataset = [json.loads(line) for line in file]
-                    seed_dataset = seed_dataset[:self.config.azr.data_selection_strategy.data_len * 
-                                                self.config.azr.data_selection_strategy.seed_batch_factor]
+                    #seed_dataset = seed_dataset[:self.config.azr.data_selection_strategy.data_len * 
+                    #                            self.config.azr.data_selection_strategy.seed_batch_factor]
+                    seed_dataset = seed_dataset[:256]
                     PrettyPrinter.status("DATA", f"Loaded {len(seed_dataset)} seed entries", "success")
                     if 'code_f' in self.config.azr.problem_types: # we need seed to generate code_f
                         ray.get(self.dataset_manager.update_seed.remote(seed_dataset))
@@ -1598,8 +1616,9 @@ class CodeIORayPPOTrainer(ReasonRLRayPPOTrainer):
                     PrettyPrinter.status("DATA", "Loading code f seed dataset from file...", "info")
                     with open(self.config.azr.code_f_seed_dataset, 'r') as file:
                         code_f_dataset = [json.loads(line) for line in file]
-                    code_f_dataset = code_f_dataset[:self.config.azr.data_selection_strategy.data_len * 
-                                                self.config.azr.data_selection_strategy.seed_batch_factor]
+                    #code_f_dataset = code_f_dataset[:self.config.azr.data_selection_strategy.data_len * 
+                    #                            self.config.azr.data_selection_strategy.seed_batch_factor]
+                    code_f_dataset = code_f_dataset[:256]
                     PrettyPrinter.status("DATA", f"Loaded {len(code_f_dataset)} code f entries", "success")
 
             # Generate missing datasets if needed

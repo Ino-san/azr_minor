@@ -221,6 +221,7 @@ class TaskRunner:
 
         trainer = CodeIORayPPOTrainer(
             past_epoch_window=config.azr.past_epoch_window,
+            ref_syntax_path=config.azr.get('ref_syntax_path', None),
             config=config,
             tokenizer=tokenizer,
             processor=processor,

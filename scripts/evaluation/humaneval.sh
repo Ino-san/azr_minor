@@ -1,24 +1,23 @@
 set -x
-
-export WORLD_SIZE=4
 export VLLM_ATTENTION_BACKEND=FLASH_ATTN
 export RAY_memory_monitor_refresh_ms=0
 export RAY_LOGGING_LEVEL=DEBUG
 export HYDRA_FULL_ERROR=1
 export PYTHONPATH="${PYTHONPATH}:$(pwd)/verl"
+export CUDA_VISIBLE_DEVICES=2,3
 
 python -m azr_minor.evaluation.src.solve \
-    azr.language=rust \
-    +azr.evalperf_type=instruct \
-    data.train_files=data/code_reason/rust_test_answer.parquet \
+    azr.language=racket \
+    +azr.evalperf_type=azr \
+    data.train_files=data/code_reason/racket_test_answer.parquet \
     data.train_batch_size=64 \
     data.val_batch_size=1312 \
     data.max_prompt_length=6144 \
     data.max_response_length=8096 \
-    +data.test_batch_size=4 \
-    +data.load_checkpoint=False \
-    +data.checkpoint_global_step=192 \
-    +data.test_file=MultiPL-E-humaneval/rust.jsonl \
+    +data.test_batch_size=2 \
+    +data.load_checkpoint=True \
+    +data.checkpoint_global_step=256 \
+    +data.test_file=MultiPL-E-MBPP/racket.jsonl \
     actor_rollout_ref.ref.include_ref=False \
     actor_rollout_ref.model.path=Qwen/Qwen2.5-Coder-3B \
     actor_rollout_ref.actor.optim.lr=1e-6 \
@@ -28,7 +27,7 @@ python -m azr_minor.evaluation.src.solve \
     actor_rollout_ref.actor.use_kl_loss=False \
     actor_rollout_ref.actor.kl_loss_coef=0.0 \
     actor_rollout_ref.actor.kl_loss_type=low_var_kl \
-    actor_rollout_ref.actor.ulysses_sequence_parallel_size=4 \
+    actor_rollout_ref.actor.ulysses_sequence_parallel_size=2 \
     actor_rollout_ref.model.enable_gradient_checkpointing=True \
     actor_rollout_ref.model.pretrained_tokenizer=True \
     actor_rollout_ref.actor.fsdp_config.param_offload=False \
@@ -47,9 +46,9 @@ python -m azr_minor.evaluation.src.solve \
     +actor_rollout_ref.actor.checkpoint.load_contents=["model"] \
     trainer.critic_warmup=0 \
     trainer.logger=['console','wandb'] \
-    trainer.project_name='azr_minor_rust' \
-    trainer.experiment_name='azr_coder_3b' \
-    trainer.n_gpus_per_node=4 \
+    trainer.project_name='azr_minor_racket' \
+    trainer.experiment_name='azr_coder_3b_reward4' \
+    trainer.n_gpus_per_node=2 \
     trainer.nnodes=1 \
     trainer.save_freq=64 \
     trainer.remove_previous_ckpt_in_save=True \

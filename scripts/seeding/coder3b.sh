@@ -5,15 +5,15 @@ export RAY_memory_monitor_refresh_ms=0
 export RAY_LOGGING_LEVEL=DEBUG
 export HYDRA_FULL_ERROR=1
 export PYTHONPATH="${PYTHONPATH}:$(pwd)/verl"
-export CUDA_VISIBLE_DEVICES=1,2,3
+export CUDA_VISIBLE_DEVICES=2,3
 
 # Define default paths, allowing overrides via environment variables
-OUTPUT_SEED_PATH=${OUTPUT_SEED_PATH:-data/3b_coder_rust_seed_io.jsonl}
-OUTPUT_ERROR_SEED_PATH=${OUTPUT_ERROR_SEED_PATH:-data/3b_coder_rust_error_seed_io.jsonl}
-OUTPUT_CODE_F_SEED_PATH=${OUTPUT_CODE_F_SEED_PATH:-data/3b_coder_rust_code_f_seed_io.jsonl}
+OUTPUT_SEED_PATH=${OUTPUT_SEED_PATH:-data/3b_coder_racket_seed_io_augmented.jsonl}
+OUTPUT_ERROR_SEED_PATH=${OUTPUT_ERROR_SEED_PATH:-data/3b_coder_racket_error_seed_io.jsonl}
+OUTPUT_CODE_F_SEED_PATH=${OUTPUT_CODE_F_SEED_PATH:-data/3b_coder_racket_code_f_seed_io_augmented.jsonl}
 
 python -m azr_minor.main_azr_minor_ppo \
-    azr.language=rust \
+    azr.language=racket \
     data.shuffle=True \
     actor_rollout_ref.ref.include_ref=False \
     algorithm.adv_estimator=reinforce_plus_plus \
@@ -108,4 +108,5 @@ python -m azr_minor.main_azr_minor_ppo \
     azr.reward.code_f_reward_type=binary \
     trainer.wandb_run_id=null \
     +azr.generate_seed_dataset_only=True \
+    +azr.ref_syntax_path=data/racket_syntax_pool.jsonl \
     trainer.total_epochs=6 $@

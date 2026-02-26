@@ -25,6 +25,9 @@ println("<FINAL_REPR_SYMBOL> ", f({inputs}))""",
 fn main() {{
     println!("<FINAL_REPR_SYMBOL> {{}}", f({inputs}));
 }}""",
+"racket": """{code}
+(printf "<FINAL_REPR_SYMBOL> ~v\\n" (f {inputs}))
+""",
 }
 
 VALIDATE_CODE_TEMPLATE = """{code}
@@ -51,6 +54,9 @@ println("<FINAL_REPR_SYMBOL> ", f({inputs}))""",
 fn main() {{
     println!("<FINAL_REPR_SYMBOL> ", f({inputs}));
 }}
+""",
+"racket": """{code}
+(printf "<FINAL_REPR_SYMBOL> ~v\\n" (f {inputs}))
 """,
 }
 
@@ -83,6 +89,9 @@ fn main() {{
     println!("<FINAL_REPR_SYMBOL> {{}}", ({gold_output}) == f({agent_input}));
 }}
 """,
+"racket": """{code}
+(printf "<FINAL_REPR_SYMBOL> ~v\\n" (equal? {gold_output} (f {agent_input})))
+""",
 }
 
 EVAL_OUTPUT_PREDICTION_TEMPLATE = """{code}
@@ -110,6 +119,9 @@ println("<FINAL_REPR_SYMBOL> ", ({gold_output}) == ({agent_output}))
 fn main() {{
     println!("<FINAL_REPR_SYMBOL> {{}}", ({gold_output}) == ({agent_output}));
 }}
+""",
+"racket": """{code}
+(printf "<FINAL_REPR_SYMBOL> ~v\\n" (equal? {gold_output} {agent_output}))
 """,
 }
 
@@ -151,6 +163,12 @@ fn main() {{
     }}
     returns
 }}
+""", 
+"racket": """{code}
+(define returns (f {inputs}))
+(if (not (equal? returns (f {inputs})))
+    (error "Non-deterministic code"))
+returns
 """,
 }
 
@@ -216,6 +234,13 @@ fn main() {{
     println!("<FINAL_REPR_SYMBOL> {{}}", returns);
 }}
 """,
+"racket": """{code}
+(define returns (f {inputs}))
+(if (not (equal? returns (f {inputs})))
+    (error "Non-deterministic code")
+    void)
+(printf "<FINAL_REPR_SYMBOL> ~v\\n" returns)
+""",
 }
 
 output_string = {
@@ -238,6 +263,9 @@ acc_list = Bool[]
 fn main() {{
     let mut acc_list = Vec::new();
 }}""",
+"racket": """{code}
+(define acc_list '())
+"""
 }
 
 append_string = {

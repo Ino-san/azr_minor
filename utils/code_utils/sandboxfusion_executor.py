@@ -206,16 +206,20 @@ class SandboxfusionExecutor:
     def eval_input_prediction(self, code: str, gold_output: str, agent_input: str, imports: List[str] = []) -> float:
         if isinstance(imports, np.ndarray):
             imports = imports.tolist()
+        """
         if imports:
             code = '\n'.join(imports) + '\n' + code
+        """
         code_snippet = EVAL_INPUT_PREDICTION_TEMPLATE_REPR[self.language].format(code=code, gold_output=gold_output, agent_input=agent_input)
-        #print(code_snippet)
+        print(code_snippet)
         max_retries = 3
         for retry in range(max_retries):
             try:
                 correct, status = self.apply(code_snippet)
+                if self.language == 'racket':
+                    correct = 'true' if correct == '#t' else 'false'
                 correct = correct.capitalize()
-                #print(correct, status)
+                print("correct: ", correct)
                 return 0.0 if 'error' in status.lower() or not eval(correct) else 1.0
             except Exception as e:
                 if retry == max_retries - 1:
@@ -232,15 +236,19 @@ class SandboxfusionExecutor:
             pass
         if isinstance(imports, np.ndarray):
             imports = imports.tolist()
+        """
         if imports:
             code = '\n'.join(imports) + '\n' + code
+        """
         code_snippet = EVAL_OUTPUT_PREDICTION_TEMPLATE_REPR[self.language].format(code=code, gold_output=gold_output, agent_output=agent_output)
         print(code_snippet)
         max_retries = 3
         for retry in range(max_retries):
             try:
                 correct, status = self.apply(code_snippet)
-                print(correct, status)
+                if self.language == 'racket':
+                    correct = 'true' if correct == '#t' else 'false'
+                print("correct: ", correct)
                 return 0.0 if 'error' in status.lower() or not eval(correct.capitalize()) else 1.0
             except Exception as e:
                 if retry == max_retries - 1:
@@ -252,9 +260,9 @@ class SandboxfusionExecutor:
     def eval_k_input_prediction(self, code: str, gold_output: str, k_agent_inputs: List[str], imports: List[str] = []) -> List[float]:
         if isinstance(imports, np.ndarray):
             imports = imports.tolist()
+        """
         if imports:
             code = '\n'.join(imports) + '\n' + code
-        """
         invalid_lists = []
         valid_k_agent_inputs = []
         for k_agent_input in k_agent_inputs:
@@ -274,9 +282,9 @@ class SandboxfusionExecutor:
     def eval_k_output_prediction(self, code: str, gold_output: str, k_agent_outputs: List[str], imports: List[str] = []) -> List[float]:
         if isinstance(imports, np.ndarray):
             imports = imports.tolist()
+        """
         if imports:
             code = '\n'.join(imports) + '\n' + code
-        """
         invalid_lists = []
         valid_k_agent_inputs = []
         for k_agent_input in k_agent_inputs:
@@ -355,6 +363,7 @@ class SandboxfusionExecutor:
             #print(response)
             if response.status == RunStatus.Success:
                 # taking [1:-1] to exclude prefix space and suffix newline
+                print(response.run_result.stdout)
                 return response.run_result.stdout.split('<FINAL_REPR_SYMBOL>')[-1][1:-1], 'done'
             else:
                 print('Error in response:', response.run_result.stderr)
